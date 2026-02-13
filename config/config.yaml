@@ -1,0 +1,4 @@
+env: "local"
+zmq:
+  address: "tcp://*:10000"
+  timeout: 490ms

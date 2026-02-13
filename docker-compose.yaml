@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: timescaledb
+    restart: unless-stopped
+    env_file:
+      - config/.env
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+      - ./scripts/create_users.sh:/docker-entrypoint-initdb.d/01-create-users.sh:ro
+    shm_size: 256mb
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=${POSTGRES_MAX_CONNECTIONS}"
+      - "-c"
+      - "shared_buffers=${POSTGRES_SHARED_BUFFERS}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  timescaledb_data:
