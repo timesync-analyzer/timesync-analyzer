@@ -1,0 +1,3 @@
+[submodule "protocol"]
+	path = protocol
+	url = git@git.redlab-i.ru:zloyaloha/time_sync_system_proto.git
