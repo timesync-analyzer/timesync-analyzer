@@ -53,6 +53,19 @@ func NewPostgresStorage(ctx context.Context, cfg config.DBConfig, logger *zap.Lo
 	return s, nil
 }
 
+func (s *PostgresStorage) InsertNodeInfo(ctx context.Context, hostname string, net_interface string, ip_address string, node_type int) error {
+	_, err := s.pool.Exec(ctx,
+		`INSERT INTO timesync.nodes (hostname, interface, ip_address, type)
+			VALUES ($1, $2, $3, $4)
+			ON CONFLICT (hostname) DO UPDATE SET is_active = true`,
+		hostname, net_interface, ip_address, node_type,
+	)
+	if err != nil {
+		return fmt.Errorf("resolve sensor_id: %w", err)
+	}
+	return nil
+}
+
 func (s *PostgresStorage) loadNodeCache(ctx context.Context) error {
 	rows, err := s.pool.Query(ctx, "SELECT node_id, hostname FROM timesync.nodes")
 	if err != nil {
