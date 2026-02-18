@@ -9,8 +9,25 @@ import (
 )
 
 type Config struct {
-	Env string `yaml:"env"`
+	Env string   `yaml:"env"`
 	Zmq ZMQConfig `yaml:"zmq"`
+	DB  DBConfig  `yaml:"db"`
+}
+
+type DBConfig struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	User     string `yaml:"user"`
+	Password string `yaml:"password"`
+	DBName   string `yaml:"dbname"`
+	SSLMode  string `yaml:"sslmode"`
+}
+
+func (d DBConfig) ConnString() string {
+	return fmt.Sprintf(
+		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
+		d.User, d.Password, d.Host, d.Port, d.DBName, d.SSLMode,
+	)
 }
 
 type ZMQConfig struct {

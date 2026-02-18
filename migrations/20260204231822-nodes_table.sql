@@ -3,6 +3,8 @@
 
 CREATE SCHEMA timesync;
 
+GRANT USAGE ON SCHEMA timesync TO timesync_app;
+
 CREATE TYPE NODE_TYPE AS ENUM ('master', 'slave');
 
 CREATE TABLE timesync.nodes (

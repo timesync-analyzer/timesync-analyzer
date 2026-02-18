@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"timesync-analyzer/internal/app"
 	"timesync-analyzer/internal/config"
+	"timesync-analyzer/internal/storage"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -26,28 +27,33 @@ func main() {
 	cfg := config.MustLoad(*pathToConfig)
 	logger := buildLogger(cfg.Env)
 
-	app, err := app.NewApp(cfg, logger)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
+	store, err := storage.NewPostgresStorage(ctx, cfg.DB, logger)
+	if err != nil {
+		logger.Fatal("can't create storage", zap.Error(err))
+	}
+	defer store.Close()
+
+	application, err := app.NewApp(cfg, store, logger)
 	if err != nil {
 		logger.Fatal("can't create app", zap.Error(err))
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-    defer cancel()
-
 	sigChan := make(chan os.Signal, 1)
-    signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
 		logger.Info("App started")
-        if err := app.Run(ctx); err != nil {
-            logger.Error("Application error", zap.Error(err))
-        }
-    }()
+		if err := application.Run(ctx); err != nil {
+			logger.Error("Application error", zap.Error(err))
+		}
+	}()
 
 	<-sigChan
-    logger.Info("Shutting down...")
-    cancel()
+	logger.Info("Shutting down...")
+	cancel()
 
 	logger.Info("Stopped")
 }

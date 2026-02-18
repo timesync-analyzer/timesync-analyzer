@@ -2,3 +2,10 @@ env: "local"
 zmq:
   address: "tcp://*:10000"
   timeout: 490ms
+db:
+  host: "localhost"
+  port: 5432
+  user: "app_user"
+  password: "secure_app_password"
+  dbname: "timesync"
+  sslmode: "disable"

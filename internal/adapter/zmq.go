@@ -16,31 +16,31 @@ type ZMQServer struct {
 
 func NewServer(config config.ZMQConfig, logger *zap.Logger) (*ZMQServer, error) {
 	ctx, err := zmq4.NewContext()
-    if err != nil {
-        return nil, fmt.Errorf("can't create context: %w", err)
-    }
+	if err != nil {
+		return nil, fmt.Errorf("can't create context: %w", err)
+	}
 
 	socket, err := zmq4.NewSocket(zmq4.PULL)
-    if err != nil {
+	if err != nil {
 		ctx.Term()
-        return nil, fmt.Errorf("error while creating socket: %w", err)
-    }
+		return nil, fmt.Errorf("error while creating socket: %w", err)
+	}
 
 	socket.SetRcvtimeo(config.Timeout)
 
-    if err := socket.Bind(config.Address); err != nil {
+	if err := socket.Bind(config.Address); err != nil {
 		ctx.Term()
-        return nil, fmt.Errorf("error while binding to %s: %w", config.Address, err)
-    }
+		return nil, fmt.Errorf("error while binding to %s: %w", config.Address, err)
+	}
 
 	return &ZMQServer{
-		ctx: ctx,
+		ctx:      ctx,
 		receiver: socket,
-		logger: logger,
+		logger:   logger,
 	}, nil
 }
 
-func (s *ZMQServer) Close(){
+func (s *ZMQServer) Close() {
 	if s.receiver != nil {
 		s.receiver.Close()
 	}
