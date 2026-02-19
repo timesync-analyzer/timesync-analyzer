@@ -15,14 +15,20 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+var nodeTypeMap = map[pb.NodeType]string{
+	pb.NodeType_NODE_TYPE_MASTER: "master",
+    pb.NodeType_NODE_TYPE_SLAVE:  "slave",
+}
+
 type App struct {
 	adapter adapter.Adapter
 	storage storage.Storage
 	logger  *zap.Logger
+	cfg     config.Config
 }
 
-func NewApp(config config.Config, store storage.Storage, logger *zap.Logger) (*App, error) {
-	server, err := adapter.NewServer(config.Zmq, logger)
+func NewApp(cfg config.Config, store storage.Storage, logger *zap.Logger) (*App, error) {
+	server, err := adapter.NewServer(cfg.Zmq, logger)
 	if err != nil {
 		return nil, fmt.Errorf("can't create zmq server: %w", err)
 	}
@@ -31,6 +37,7 @@ func NewApp(config config.Config, store storage.Storage, logger *zap.Logger) (*A
 		adapter: server,
 		storage: store,
 		logger:  logger,
+		cfg:     cfg,
 	}, nil
 }
 
@@ -81,7 +88,7 @@ func (a *App) handleNodeInfo(ctx context.Context, node string, m *pb.NodeInfo) {
 		return
 	}
 
-	if err := a.storage.InsertNodeInfo(ctx, node, m.NetInterface, m.IpAddress, int(m.NodeType)); err != nil {
+	if err := a.storage.InsertNodeInfo(ctx, node, m.NetInterface, m.IpAddress, nodeTypeMap[m.NodeType]); err != nil {
 		a.logger.Error("Failed to insert phc2sys metrics", zap.Error(err), zap.String("node", node))
 	}
 }
@@ -96,6 +103,8 @@ func (a *App) handlePtp4l(ctx context.Context, node string, timestamp time.Time,
 		a.logger.Warn("Unknown node", zap.String("hostname", node))
 		return
 	}
+
+	a.storage.TouchNode(nodeID)
 
 	if err := a.storage.InsertPtp4l(ctx, timestamp, nodeID, m.OffsetNs, m.Frequency, m.PathDelay); err != nil {
 		a.logger.Error("Failed to insert ptp4l metrics", zap.Error(err), zap.String("node", node))
@@ -113,6 +122,8 @@ func (a *App) handlePhc2sys(ctx context.Context, node string, timestamp time.Tim
 		return
 	}
 
+	a.storage.TouchNode(nodeID)
+
 	if err := a.storage.InsertPhc2sys(ctx, timestamp, nodeID, m.OffsetNs, m.Frequency, m.PathDelay); err != nil {
 		a.logger.Error("Failed to insert phc2sys metrics", zap.Error(err), zap.String("node", node))
 	}
@@ -128,6 +139,8 @@ func (a *App) handleSystem(ctx context.Context, node string, timestamp time.Time
 		a.logger.Warn("Unknown node", zap.String("hostname", node))
 		return
 	}
+
+	a.storage.TouchNode(nodeID)
 
 	if net := m.NetworkStats; net != nil {
 		if err := a.storage.InsertNetwork(ctx, timestamp, nodeID,
@@ -172,6 +185,22 @@ func (a *App) handleSystem(ctx context.Context, node string, timestamp time.Time
 				a.logger.Error("Failed to insert temperature metrics", zap.Error(err),
 					zap.String("node", node),
 					zap.Int32("sensor_id", sensorID))
+			}
+		}
+	}
+}
+
+func (a *App) RunWatchdog(ctx context.Context) {
+	ticker := time.NewTicker(a.cfg.NodeTimeout)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if err := a.storage.DeactivateStaleNodes(ctx, a.cfg.NodeTimeout); err != nil {
+				a.logger.Error("Failed to deactivate stale nodes", zap.Error(err))
 			}
 		}
 	}

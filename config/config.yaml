@@ -1,4 +1,5 @@
 env: "local"
+node_timeout: 30s
 zmq:
   address: "tcp://*:10000"
   timeout: 490ms

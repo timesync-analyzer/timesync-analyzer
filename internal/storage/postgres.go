@@ -24,6 +24,8 @@ type PostgresStorage struct {
 	nodeCache   map[string]int32
 	sensorCache map[sensorKey]int32
 	sensorMu    sync.Mutex
+	lastSeen    map[int32]time.Time
+	lastSeenMu  sync.RWMutex
 }
 
 func NewPostgresStorage(ctx context.Context, cfg config.DBConfig, logger *zap.Logger) (*PostgresStorage, error) {
@@ -42,6 +44,7 @@ func NewPostgresStorage(ctx context.Context, cfg config.DBConfig, logger *zap.Lo
 		logger:      logger,
 		nodeCache:   make(map[string]int32),
 		sensorCache: make(map[sensorKey]int32),
+		lastSeen:    make(map[int32]time.Time),
 	}
 
 	if err := s.loadNodeCache(ctx); err != nil {
@@ -53,16 +56,26 @@ func NewPostgresStorage(ctx context.Context, cfg config.DBConfig, logger *zap.Lo
 	return s, nil
 }
 
-func (s *PostgresStorage) InsertNodeInfo(ctx context.Context, hostname string, net_interface string, ip_address string, node_type int) error {
-	_, err := s.pool.Exec(ctx,
-		`INSERT INTO timesync.nodes (hostname, interface, ip_address, type)
-			VALUES ($1, $2, $3, $4)
-			ON CONFLICT (hostname) DO UPDATE SET is_active = true`,
-		hostname, net_interface, ip_address, node_type,
-	)
+func (s *PostgresStorage) InsertNodeInfo(ctx context.Context, hostname string, netInterface string, ipAddress string, nodeType string) error {
+	var nodeID int32
+	err := s.pool.QueryRow(ctx,
+		`INSERT INTO timesync.nodes (hostname, interface, ip_address, type, is_active, last_seen_at)
+			VALUES ($1, $2, $3, $4, TRUE, NOW())
+			ON CONFLICT (hostname) DO UPDATE SET
+				interface = EXCLUDED.interface,
+				ip_address = EXCLUDED.ip_address,
+				type = EXCLUDED.type,
+				is_active = TRUE,
+				last_seen_at = NOW()
+			RETURNING node_id`,
+		hostname, netInterface, ipAddress, nodeType,
+	).Scan(&nodeID)
 	if err != nil {
-		return fmt.Errorf("resolve sensor_id: %w", err)
+		return fmt.Errorf("insert node info: %w", err)
 	}
+
+	s.nodeCache[hostname] = nodeID
+	s.TouchNode(nodeID)
 	return nil
 }
 
@@ -170,6 +183,43 @@ func (s *PostgresStorage) InsertTemperature(ctx context.Context, ts time.Time, s
 		ts, sensorID, temperature,
 	)
 	return err
+}
+
+func (s *PostgresStorage) TouchNode(nodeID int32) {
+	s.lastSeenMu.Lock()
+	s.lastSeen[nodeID] = time.Now()
+	s.lastSeenMu.Unlock()
+}
+
+func (s *PostgresStorage) DeactivateStaleNodes(ctx context.Context, timeout time.Duration) error {
+	s.lastSeenMu.RLock()
+	snapshot := make(map[int32]time.Time, len(s.lastSeen))
+	for id, ts := range s.lastSeen {
+		snapshot[id] = ts
+	}
+	s.lastSeenMu.RUnlock()
+
+	now := time.Now()
+	for nodeID, ts := range snapshot {
+		if now.Sub(ts) > timeout {
+			_, err := s.pool.Exec(ctx,
+				`UPDATE timesync.nodes SET is_active = FALSE WHERE node_id = $1 AND is_active = TRUE`,
+				nodeID,
+			)
+			if err != nil {
+				return fmt.Errorf("deactivate node %d: %w", nodeID, err)
+			}
+		} else {
+			_, err := s.pool.Exec(ctx,
+				`UPDATE timesync.nodes SET is_active = TRUE, last_seen_at = $2 WHERE node_id = $1`,
+				nodeID, ts,
+			)
+			if err != nil {
+				return fmt.Errorf("update last_seen_at for node %d: %w", nodeID, err)
+			}
+		}
+	}
+	return nil
 }
 
 func (s *PostgresStorage) Close() {

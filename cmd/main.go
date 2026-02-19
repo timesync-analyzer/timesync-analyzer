@@ -51,6 +51,8 @@ func main() {
 		}
 	}()
 
+	go application.RunWatchdog(ctx)
+
 	<-sigChan
 	logger.Info("Shutting down...")
 	cancel()

@@ -15,7 +15,9 @@ type Storage interface {
 	InsertCpu(ctx context.Context, ts time.Time, nodeID int32, usagePercent float64, ctxSwitches, interrupts, softirqs int64) error
 	InsertMemory(ctx context.Context, ts time.Time, nodeID int32, memAvailableKb float64, memFreeKb, swapTotalKb, swapFreeKb, buffersKb int64) error
 	InsertTemperature(ctx context.Context, ts time.Time, sensorID int32, temperature int32) error
-	InsertNodeInfo(ctx context.Context, hostname string, net_interface string, ip_address string, node_type int) error
+	InsertNodeInfo(ctx context.Context, hostname string, net_interface string, ip_address string, node_type string) error
+	TouchNode(nodeID int32)
+	DeactivateStaleNodes(ctx context.Context, timeout time.Duration) error
 
 	Close()
 }

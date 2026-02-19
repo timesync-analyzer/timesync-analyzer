@@ -9,9 +9,10 @@ import (
 )
 
 type Config struct {
-	Env string   `yaml:"env"`
-	Zmq ZMQConfig `yaml:"zmq"`
-	DB  DBConfig  `yaml:"db"`
+	Env         string        `yaml:"env"`
+	Zmq         ZMQConfig     `yaml:"zmq"`
+	DB          DBConfig      `yaml:"db"`
+	NodeTimeout time.Duration `yaml:"node_timeout"`
 }
 
 type DBConfig struct {
