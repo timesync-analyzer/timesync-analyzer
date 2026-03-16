@@ -2,7 +2,7 @@ package adapter
 
 import (
 	"fmt"
-	"timesync-analyzer/internal/config"
+	"timesync-analyzer/src/internal/config"
 
 	"github.com/pebbe/zmq4"
 	"go.uber.org/zap"

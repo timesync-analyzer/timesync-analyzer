@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"time"
-	"timesync-analyzer/internal/adapter"
-	"timesync-analyzer/internal/config"
-	"timesync-analyzer/internal/storage"
+	"timesync-analyzer/src/internal/adapter"
+	"timesync-analyzer/src/internal/config"
+	"timesync-analyzer/src/internal/storage"
 
 	pb "timesync-analyzer/protocol/generated"
 
@@ -78,6 +78,8 @@ func (a *App) handleMsg(ctx context.Context, wrapper *pb.MetricsWrapper) {
 		a.handlePtp4l(ctx, wrapper.GetNodeName(), wrapper.GetTimestamp().AsTime(), wrapper.GetPtp4L())
 	case pb.MessageType_MESSAGE_TYPE_SYSTEM:
 		a.handleSystem(ctx, wrapper.GetNodeName(), wrapper.GetTimestamp().AsTime(), wrapper.GetSystem())
+	case pb.MessageType_MESSAGE_TYPE_PPS:
+		a.handlePps(ctx, wrapper.GetNodeName(), wrapper.GetTimestamp().AsTime(), wrapper.GetPps())
 	default:
 		a.logger.Warn("Unknown message type", zap.Int32("type", int32(wrapper.Type)))
 	}
@@ -107,6 +109,24 @@ func (a *App) handlePtp4l(ctx context.Context, node string, timestamp time.Time,
 	a.storage.TouchNode(nodeID)
 
 	if err := a.storage.InsertPtp4l(ctx, timestamp, nodeID, m.OffsetNs, m.Frequency, m.PathDelay); err != nil {
+		a.logger.Error("Failed to insert ptp4l metrics", zap.Error(err), zap.String("node", node))
+	}
+}
+
+func (a *App) handlePps(ctx context.Context, node string, timestamp time.Time, m *pb.PPSMetrics) {
+	if m == nil {
+		return
+	}
+
+	nodeID, ok := a.storage.ResolveNodeID(node)
+	if !ok {
+		a.logger.Warn("Unknown node", zap.String("hostname", node))
+		return
+	}
+
+	a.storage.TouchNode(nodeID)
+
+	if err := a.storage.InsertPps(ctx, timestamp, nodeID, m.OffsetNs); err != nil {
 		a.logger.Error("Failed to insert ptp4l metrics", zap.Error(err), zap.String("node", node))
 	}
 }

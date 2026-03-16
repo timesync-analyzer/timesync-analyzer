@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
-	"timesync-analyzer/internal/config"
+	"timesync-analyzer/src/internal/config"
 )
 
 type sensorKey struct {
@@ -136,6 +136,15 @@ func (s *PostgresStorage) InsertPtp4l(ctx context.Context, ts time.Time, nodeID 
 		`INSERT INTO timesync.ptp4l_metrics (time, node_id, offset_ns, frequency, path_delay)
 		 VALUES ($1, $2, $3, $4, $5)`,
 		ts, nodeID, offsetNs, frequency, pathDelay,
+	)
+	return err
+}
+
+func (s *PostgresStorage) InsertPps(ctx context.Context, ts time.Time, nodeID int32, offsetNs int64) error {
+	_, err := s.pool.Exec(ctx,
+		`INSERT INTO timesync.pps_metrics (time, node_id, offset_ns)
+		 VALUES ($1, $2, $3)`,
+		ts, nodeID, offsetNs,
 	)
 	return err
 }

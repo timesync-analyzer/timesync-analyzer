@@ -14,7 +14,7 @@ func main() {
     socket.SetRcvtimeo(100 * time.Millisecond)
     socket.Bind("tcp://*:10000")
     
-    fmt.Println("Listening on tcp://*:15555")
+    fmt.Println("Listening on tcp://*:10000")
     fmt.Println("NO other code running, just pure ZMQ")
     
     count := 0

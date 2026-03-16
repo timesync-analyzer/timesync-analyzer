@@ -6,9 +6,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"timesync-analyzer/internal/app"
-	"timesync-analyzer/internal/config"
-	"timesync-analyzer/internal/storage"
+	"timesync-analyzer/src/internal/app"
+	"timesync-analyzer/src/internal/config"
+	"timesync-analyzer/src/internal/storage"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -43,6 +43,8 @@ func main() {
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	logger.Debug(cfg.Zmq.Address)
 
 	go func() {
 		logger.Info("App started")
