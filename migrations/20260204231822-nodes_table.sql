@@ -4,6 +4,8 @@
 CREATE SCHEMA timesync;
 
 GRANT USAGE ON SCHEMA timesync TO timesync_app;
+GRANT USAGE ON SCHEMA timesync TO readonly_user;
+GRANT SELECT ON ALL TABLES IN SCHEMA timesync TO readonly_user;
 
 CREATE TYPE NODE_TYPE AS ENUM ('master', 'slave');
 

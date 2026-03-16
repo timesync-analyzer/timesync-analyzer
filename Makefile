@@ -1,4 +1,4 @@
-.PHONY: proto clean proto-clean update-protocol
+.PHONY: proto clean proto-clean update-protocol grafana_up grafana_down
 
 proto:
 	@echo "Generating Go code from protobuf..."
@@ -31,7 +31,13 @@ clean: proto-clean
 	rm -rf bin/
 
 db_up:
-	docker compose --env-file ./config/.env up -d
+	docker compose --env-file ./config/.env up -d timescaledb
 
 db_down:
 	docker compose down -v timescaledb
+
+grafana_up:
+	docker compose --env-file ./config/.env up -d grafana
+
+grafana_down:
+	docker compose down grafana

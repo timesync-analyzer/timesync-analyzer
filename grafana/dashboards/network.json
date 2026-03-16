@@ -1,0 +1,312 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Network interface metrics: packets, drops, errors and collisions per node",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {"type": "postgres", "uid": "timescaledb"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "id": 1,
+      "options": {
+        "legend": {"calcs": ["last"], "displayMode": "table", "placement": "right"},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb"},
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'5s'),\n  n.hostname AS metric,\n  avg(rx_packets) AS \"RX Packets\"\nFROM timesync.network_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "RX Packets",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "timescaledb"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "id": 2,
+      "options": {
+        "legend": {"calcs": ["last"], "displayMode": "table", "placement": "right"},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb"},
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'5s'),\n  n.hostname AS metric,\n  avg(tx_packets) AS \"TX Packets\"\nFROM timesync.network_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "TX Packets",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "timescaledb"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "id": 3,
+      "options": {
+        "legend": {"calcs": ["last", "max"], "displayMode": "table", "placement": "right"},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb"},
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'5s'),\n  n.hostname AS metric,\n  avg(rx_dropped) AS \"RX Dropped\"\nFROM timesync.network_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "RX Dropped",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "timescaledb"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "id": 4,
+      "options": {
+        "legend": {"calcs": ["last", "max"], "displayMode": "table", "placement": "right"},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb"},
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'5s'),\n  n.hostname AS metric,\n  avg(tx_dropped) AS \"TX Dropped\"\nFROM timesync.network_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "TX Dropped",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "timescaledb"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "id": 5,
+      "options": {
+        "legend": {"calcs": ["last", "max"], "displayMode": "table", "placement": "right"},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb"},
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'5s'),\n  n.hostname AS metric,\n  avg(rx_errors) AS \"RX Errors\"\nFROM timesync.network_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "RX Errors",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "timescaledb"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+      "id": 6,
+      "options": {
+        "legend": {"calcs": ["last", "max"], "displayMode": "table", "placement": "right"},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb"},
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'5s'),\n  n.hostname AS metric,\n  avg(tx_errors) AS \"TX Errors\"\nFROM timesync.network_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "TX Errors",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "timescaledb"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+      "id": 7,
+      "options": {
+        "legend": {"calcs": ["last", "max"], "displayMode": "table", "placement": "right"},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb"},
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'5s'),\n  n.hostname AS metric,\n  avg(collisions) AS \"Collisions\"\nFROM timesync.network_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Collisions",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "tags": ["network", "timesync"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": {"type": "postgres", "uid": "timescaledb"},
+        "definition": "SELECT hostname FROM timesync.nodes ORDER BY 1",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "node",
+        "options": [],
+        "query": "SELECT hostname FROM timesync.nodes ORDER BY 1",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "type": "query",
+        "allValue": ".*",
+        "label": "Node"
+      }
+    ]
+  },
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Network",
+  "uid": "network",
+  "version": 2
+}

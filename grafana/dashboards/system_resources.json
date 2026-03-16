@@ -1,0 +1,240 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "System resource metrics: CPU, memory and temperature per node",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {"type": "postgres", "uid": "timescaledb"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "max": 100,
+          "min": 0,
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "id": 1,
+      "options": {
+        "legend": {"calcs": ["last", "max"], "displayMode": "table", "placement": "right"},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb"},
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'15s'),\n  n.hostname AS metric,\n  avg(usage_percent) AS \"CPU Usage (%)\"\nFROM timesync.cpu_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "CPU Usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "timescaledb"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "id": 2,
+      "options": {
+        "legend": {"calcs": ["last"], "displayMode": "table", "placement": "right"},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb"},
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'15s'),\n  n.hostname AS metric,\n  avg(context_switches) AS \"Context Switches\"\nFROM timesync.cpu_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Context Switches",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "timescaledb"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "decmbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "id": 3,
+      "options": {
+        "legend": {"calcs": ["last", "min"], "displayMode": "table", "placement": "right"},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb"},
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'15s'),\n  n.hostname AS metric,\n  avg(mem_available_kb) / 1024 AS \"Available (MB)\"\nFROM timesync.memory_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Memory Available",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "timescaledb"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "decmbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "id": 4,
+      "options": {
+        "legend": {"calcs": ["last", "min"], "displayMode": "table", "placement": "right"},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb"},
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'15s'),\n  n.hostname AS metric,\n  avg(swap_free_kb) / 1024 AS \"Swap Free (MB)\"\nFROM timesync.memory_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Swap Free",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "timescaledb"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+      "id": 5,
+      "options": {
+        "legend": {"calcs": ["last", "max"], "displayMode": "table", "placement": "right"},
+        "tooltip": {"mode": "multi", "sort": "none"}
+      },
+      "targets": [
+        {
+          "datasource": {"type": "postgres", "uid": "timescaledb"},
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(tm.time,'15s'),\n  n.hostname || ' — ' || s.sensor_label AS metric,\n  avg(tm.temperature) AS \"Temperature (°C)\"\nFROM timesync.temperature_metrics tm\nJOIN timesync.sensors s ON s.sensor_id = tm.sensor_id\nJOIN timesync.nodes n ON n.node_id = s.node_id\nWHERE $__timeFilter(tm.time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Temperature",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "tags": ["system", "timesync"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": {"type": "postgres", "uid": "timescaledb"},
+        "definition": "SELECT hostname FROM timesync.nodes ORDER BY 1",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "node",
+        "options": [],
+        "query": "SELECT hostname FROM timesync.nodes ORDER BY 1",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "type": "query",
+        "allValue": ".*",
+        "label": "Node"
+      }
+    ]
+  },
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "System Resources",
+  "uid": "system-resources",
+  "version": 2
+}
