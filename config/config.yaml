@@ -3,10 +3,13 @@ node_timeout: 30s
 zmq:
   address: "tcp://*:10000"
   timeout: 490ms
-db:
+storage:
   host: "localhost"
   port: 5432
   user: "app_user"
   password: "secure_app_password"
   dbname: "timesync"
   sslmode: "disable"
+  batch:
+    max_size: 500
+    flush_interval: 1s

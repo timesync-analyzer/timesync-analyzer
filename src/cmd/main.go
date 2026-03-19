@@ -30,7 +30,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	store, err := storage.NewPostgresStorage(ctx, cfg.DB, logger)
+	store, err := storage.NewBatchPostgresStorage(ctx, cfg.DB, logger)
 	if err != nil {
 		logger.Fatal("can't create storage", zap.Error(err))
 	}
@@ -50,6 +50,13 @@ func main() {
 		logger.Info("App started")
 		if err := application.Run(ctx); err != nil {
 			logger.Error("Application error", zap.Error(err))
+		}
+	}()
+
+	go func() {
+		logger.Info("Batcher inserter started")
+		if err := store.Run(ctx); err != nil {
+			logger.Error("Batch inserter error", zap.Error(err))
 		}
 	}()
 

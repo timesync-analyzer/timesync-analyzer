@@ -11,7 +11,7 @@ import (
 type Config struct {
 	Env         string        `yaml:"env"`
 	Zmq         ZMQConfig     `yaml:"zmq"`
-	DB          DBConfig      `yaml:"db"`
+	DB          DBConfig      `yaml:"storage"`
 	NodeTimeout time.Duration `yaml:"node_timeout"`
 }
 
@@ -22,6 +22,12 @@ type DBConfig struct {
 	Password string `yaml:"password"`
 	DBName   string `yaml:"dbname"`
 	SSLMode  string `yaml:"sslmode"`
+	Batch    BatchConfig `yaml:"batch"`
+}
+
+type BatchConfig struct {
+	MaxSize        int `yaml:"max_size"`
+	FlushInterval  time.Duration `yaml:"flush_interval"`
 }
 
 func (d DBConfig) ConnString() string {
