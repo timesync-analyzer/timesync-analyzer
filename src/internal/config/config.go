@@ -13,6 +13,12 @@ type Config struct {
 	Zmq         ZMQConfig     `yaml:"zmq"`
 	DB          DBConfig      `yaml:"storage"`
 	NodeTimeout time.Duration `yaml:"node_timeout"`
+	Slider      SliderConfig `yaml:"slider"`
+}
+
+type SliderConfig struct {
+	CalculateInterval time.Duration `yaml:"calculate_interval"`
+	ObservationInterval  time.Duration `yaml:"observation_interval"`
 }
 
 type DBConfig struct {

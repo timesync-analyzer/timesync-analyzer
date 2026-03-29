@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
@@ -18,9 +19,15 @@ type sensorKey struct {
 	label  string
 }
 
+type OffsetRow struct {
+	Time     time.Time
+	OffsetNs int64
+}
+
 type PostgresStorage struct {
 	pool        *pgxpool.Pool
 	logger      *zap.Logger
+	nodeMu      sync.RWMutex
 	nodeCache   map[string]int32
 	sensorCache map[sensorKey]int32
 	sensorMu    sync.Mutex
@@ -74,7 +81,9 @@ func (s *PostgresStorage) InsertNodeInfo(ctx context.Context, hostname string, n
 		return fmt.Errorf("insert node info: %w", err)
 	}
 
+	s.nodeMu.Lock()
 	s.nodeCache[hostname] = nodeID
+	s.nodeMu.Unlock()
 	s.TouchNode(nodeID)
 	return nil
 }
@@ -98,7 +107,9 @@ func (s *PostgresStorage) loadNodeCache(ctx context.Context) error {
 }
 
 func (s *PostgresStorage) ResolveNodeID(hostname string) (int32, bool) {
+	s.nodeMu.RLock()
 	id, ok := s.nodeCache[hostname]
+	s.nodeMu.RUnlock()
 	return id, ok
 }
 
@@ -229,6 +240,64 @@ func (s *PostgresStorage) DeactivateStaleNodes(ctx context.Context, timeout time
 		}
 	}
 	return nil
+}
+
+func (s *PostgresStorage) GetNodeIDList(ctx context.Context) ([]int32, error) {
+	rows, err := s.pool.Query(ctx, "SELECT node_id FROM timesync.nodes WHERE is_active = true")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []int32
+	for rows.Next() {
+		var id int32
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("scan node row: %w", err)
+		}
+		result = append(result, id)
+	}
+	return result, rows.Err()
+}
+
+func (s *PostgresStorage) GetOffsets(ctx context.Context, table string, nodeID int32, period time.Duration) ([]OffsetRow, error) {
+	query := fmt.Sprintf(
+		`SELECT time, offset_ns
+		 FROM %s
+		 WHERE node_id = $1 AND time > now() - $2::interval
+		 ORDER BY time ASC`,
+		pgx.Identifier{"timesync", table}.Sanitize(),
+	)
+
+	rows, err := s.pool.Query(ctx, query, nodeID, period.String())
+	if err != nil {
+		return nil, fmt.Errorf("query offsets: %w", err)
+	}
+	defer rows.Close()
+
+	var result []OffsetRow
+	for rows.Next() {
+		var r OffsetRow
+		if err := rows.Scan(&r.Time, &r.OffsetNs); err != nil {
+			return nil, fmt.Errorf("scan offset row: %w", err)
+		}
+		result = append(result, r)
+	}
+	return result, rows.Err()
+}
+
+func (s *PostgresStorage) InsertSlideMetrics(ctx context.Context, table string, ts time.Time, nodeID int32, windowSize int, mtie int64, tdev float64) error {
+	query := fmt.Sprintf(
+		`INSERT INTO %s (time, node_id, window_size, mtie_ns, tdev_ns)
+		 VALUES ($1, $2, $3, $4, $5)`,
+		pgx.Identifier{"timesync", table}.Sanitize(),
+	)
+
+	_, err := s.pool.Exec(ctx, query, ts, nodeID, windowSize, mtie, tdev)
+	if err != nil {
+		s.logger.Error("can't insert quality metrics", zap.Error(err))
+	}
+	return err
 }
 
 func (s *PostgresStorage) Close() {

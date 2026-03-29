@@ -98,16 +98,38 @@ type BatchPostgresStorage struct {
 	temperatureBuf []temperatureRow
 }
 
+const (
+	defaultMaxSize       = 500
+	defaultFlushInterval = time.Second
+)
+
 func NewBatchPostgresStorage(ctx context.Context, cfg config.DBConfig, logger *zap.Logger) (*BatchPostgresStorage, error) {
 	pgStorage, err := NewPostgresStorage(ctx, cfg, logger)
 	if err != nil {
 		return nil, fmt.Errorf("can't create postgres handler: %w", err)
 	}
 
+	maxSize := cfg.Batch.MaxSize
+	if maxSize <= 0 {
+		maxSize = defaultMaxSize
+	}
+
+	flushInterval := cfg.Batch.FlushInterval
+	if flushInterval <= 0 {
+		flushInterval = defaultFlushInterval
+	}
+
 	return &BatchPostgresStorage{
 		PostgresStorage: pgStorage,
-		maxSize:         cfg.Batch.MaxSize,
-		flushInterval:   cfg.Batch.FlushInterval,
+		maxSize:         maxSize,
+		flushInterval:   flushInterval,
+		ptp4lBuf:        make([]ptp4lRow, 0, maxSize),
+		phc2sysBuf:      make([]phc2sysRow, 0, maxSize),
+		ppsBuf:          make([]ppsRow, 0, maxSize),
+		networkBuf:      make([]networkRow, 0, maxSize),
+		cpuBuf:          make([]cpuRow, 0, maxSize),
+		memoryBuf:       make([]memoryRow, 0, maxSize),
+		temperatureBuf:  make([]temperatureRow, 0, maxSize),
 	}, nil
 }
 
@@ -122,7 +144,7 @@ func (s *BatchPostgresStorage) Run(ctx context.Context) error {
 			return nil
 		case <-ticker.C:
 			if err := s.FlushAll(ctx); err != nil {
-				return err
+				s.logger.Error("periodic flush failed", zap.Error(err))
 			}
 		}
 	}
@@ -160,7 +182,7 @@ func (s *BatchPostgresStorage) InsertPtp4l(ctx context.Context, ts time.Time, no
 	s.ptp4lMu.Unlock()
 
 	if shouldFlush {
-		s.flushPtp4l(ctx)
+		return s.flushPtp4l(ctx)
 	}
 	return nil
 }
@@ -184,6 +206,9 @@ func (s *BatchPostgresStorage) flushPtp4l(ctx context.Context) error {
 		}),
 	)
 	if err != nil {
+		s.ptp4lMu.Lock()
+		s.ptp4lBuf = append(rows, s.ptp4lBuf...)
+		s.ptp4lMu.Unlock()
 		s.logger.Error("batch flush ptp4l failed", zap.Int("rows", len(rows)), zap.Error(err))
 		return err
 	}
@@ -197,7 +222,7 @@ func (s *BatchPostgresStorage) InsertPhc2sys(ctx context.Context, ts time.Time, 
 	s.phc2sysMu.Unlock()
 
 	if shouldFlush {
-		s.flushPhc2sys(ctx)
+		return s.flushPhc2sys(ctx)
 	}
 	return nil
 }
@@ -221,6 +246,9 @@ func (s *BatchPostgresStorage) flushPhc2sys(ctx context.Context) error {
 		}),
 	)
 	if err != nil {
+		s.phc2sysMu.Lock()
+		s.phc2sysBuf = append(rows, s.phc2sysBuf...)
+		s.phc2sysMu.Unlock()
 		s.logger.Error("batch flush phc2sys failed", zap.Int("rows", len(rows)), zap.Error(err))
 		return err
 	}
@@ -234,7 +262,7 @@ func (s *BatchPostgresStorage) InsertPps(ctx context.Context, ts time.Time, node
 	s.ppsMu.Unlock()
 
 	if shouldFlush {
-		s.flushPPS(ctx)
+		return s.flushPPS(ctx)
 	}
 	return nil
 }
@@ -258,6 +286,9 @@ func (s *BatchPostgresStorage) flushPPS(ctx context.Context) error {
 		}),
 	)
 	if err != nil {
+		s.ppsMu.Lock()
+		s.ppsBuf = append(rows, s.ppsBuf...)
+		s.ppsMu.Unlock()
 		s.logger.Error("batch flush pps failed", zap.Int("rows", len(rows)), zap.Error(err))
 		return err
 	}
@@ -271,7 +302,7 @@ func (s *BatchPostgresStorage) InsertNetwork(ctx context.Context, ts time.Time, 
 	s.networkMu.Unlock()
 
 	if shouldFlush {
-		s.flushNetwork(ctx)
+		return s.flushNetwork(ctx)
 	}
 	return nil
 }
@@ -295,6 +326,9 @@ func (s *BatchPostgresStorage) flushNetwork(ctx context.Context) error {
 		}),
 	)
 	if err != nil {
+		s.networkMu.Lock()
+		s.networkBuf = append(rows, s.networkBuf...)
+		s.networkMu.Unlock()
 		s.logger.Error("batch flush network failed", zap.Int("rows", len(rows)), zap.Error(err))
 		return err
 	}
@@ -308,7 +342,7 @@ func (s *BatchPostgresStorage) InsertCpu(ctx context.Context, ts time.Time, node
 	s.cpuMu.Unlock()
 
 	if shouldFlush {
-		s.flushCpu(ctx)
+		return s.flushCpu(ctx)
 	}
 	return nil
 }
@@ -332,6 +366,9 @@ func (s *BatchPostgresStorage) flushCpu(ctx context.Context) error {
 		}),
 	)
 	if err != nil {
+		s.cpuMu.Lock()
+		s.cpuBuf = append(rows, s.cpuBuf...)
+		s.cpuMu.Unlock()
 		s.logger.Error("batch flush cpu failed", zap.Int("rows", len(rows)), zap.Error(err))
 		return err
 	}
@@ -345,7 +382,7 @@ func (s *BatchPostgresStorage) InsertMemory(ctx context.Context, ts time.Time, n
 	s.memoryMu.Unlock()
 
 	if shouldFlush {
-		s.flushMemory(ctx)
+		return s.flushMemory(ctx)
 	}
 	return nil
 }
@@ -369,6 +406,9 @@ func (s *BatchPostgresStorage) flushMemory(ctx context.Context) error {
 		}),
 	)
 	if err != nil {
+		s.memoryMu.Lock()
+		s.memoryBuf = append(rows, s.memoryBuf...)
+		s.memoryMu.Unlock()
 		s.logger.Error("batch flush memory failed", zap.Int("rows", len(rows)), zap.Error(err))
 		return err
 	}
@@ -382,7 +422,7 @@ func (s *BatchPostgresStorage) InsertTemperature(ctx context.Context, ts time.Ti
 	s.temperatureMu.Unlock()
 
 	if shouldFlush {
-		s.flushTemperature(ctx)
+		return s.flushTemperature(ctx)
 	}
 	return nil
 }
@@ -406,6 +446,9 @@ func (s *BatchPostgresStorage) flushTemperature(ctx context.Context) error {
 		}),
 	)
 	if err != nil {
+		s.temperatureMu.Lock()
+		s.temperatureBuf = append(rows, s.temperatureBuf...)
+		s.temperatureMu.Unlock()
 		s.logger.Error("batch flush temperature failed", zap.Int("rows", len(rows)), zap.Error(err))
 		return err
 	}

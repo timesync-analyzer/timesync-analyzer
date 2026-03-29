@@ -23,6 +23,7 @@ var nodeTypeMap = map[pb.NodeType]string{
 type App struct {
 	adapter adapter.Adapter
 	storage storage.Storage
+	windowMetricsSlider MetricsWindowSlider
 	logger  *zap.Logger
 	cfg     config.Config
 }
@@ -33,8 +34,11 @@ func NewApp(cfg config.Config, store storage.Storage, logger *zap.Logger) (*App,
 		return nil, fmt.Errorf("can't create zmq server: %w", err)
 	}
 
+	slider := NewMetricsWindowSlider(store, logger, cfg.Slider.CalculateInterval, cfg.Slider.ObservationInterval)
+
 	return &App{
 		adapter: server,
+		windowMetricsSlider: *slider,
 		storage: store,
 		logger:  logger,
 		cfg:     cfg,
@@ -43,6 +47,9 @@ func NewApp(cfg config.Config, store storage.Storage, logger *zap.Logger) (*App,
 
 func (a *App) Run(ctx context.Context) error {
 	defer a.adapter.Close()
+
+	go a.windowMetricsSlider.Run(ctx)
+
 	for {
 		select {
 		case <-ctx.Done():

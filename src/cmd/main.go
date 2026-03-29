@@ -5,6 +5,7 @@ import (
 	"flag"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"timesync-analyzer/src/internal/app"
 	"timesync-analyzer/src/internal/config"
@@ -53,7 +54,10 @@ func main() {
 		}
 	}()
 
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		logger.Info("Batcher inserter started")
 		if err := store.Run(ctx); err != nil {
 			logger.Error("Batch inserter error", zap.Error(err))
@@ -65,6 +69,7 @@ func main() {
 	<-sigChan
 	logger.Info("Shutting down...")
 	cancel()
+	wg.Wait()
 
 	logger.Info("Stopped")
 }
