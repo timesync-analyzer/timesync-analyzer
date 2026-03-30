@@ -87,6 +87,8 @@ func (a *App) handleMsg(ctx context.Context, wrapper *pb.MetricsWrapper) {
 		a.handleSystem(ctx, wrapper.GetNodeName(), wrapper.GetTimestamp().AsTime(), wrapper.GetSystem())
 	case pb.MessageType_MESSAGE_TYPE_PPS:
 		a.handlePps(ctx, wrapper.GetNodeName(), wrapper.GetTimestamp().AsTime(), wrapper.GetPps())
+	case pb.MessageType_MESSAGE_TYPE_PTP4L_PORT_EVENT:
+		a.handlePtp4lPortEvent(ctx, wrapper.GetNodeName(), wrapper.GetTimestamp().AsTime(), wrapper.GetPtp4LPortEvent())
 	default:
 		a.logger.Warn("Unknown message type", zap.Int32("type", int32(wrapper.Type)))
 	}
@@ -100,6 +102,24 @@ func (a *App) handleNodeInfo(ctx context.Context, node string, m *pb.NodeInfo) {
 	a.logger.Info("Register new node", zap.String("node", node))
 	if err := a.storage.InsertNodeInfo(ctx, node, m.NetInterface, m.IpAddress, nodeTypeMap[m.NodeType]); err != nil {
 		a.logger.Error("Failed to insert node info metrics", zap.Error(err), zap.String("node", node))
+	}
+}
+
+func (a *App) handlePtp4lPortEvent(ctx context.Context, node string, timestamp time.Time, m *pb.Ptp4LPortEvent)  {
+	if m == nil {
+		return
+	}
+
+	nodeID, ok := a.storage.ResolveNodeID(node)
+	if !ok {
+		a.logger.Warn("Unknown node", zap.String("hostname", node))
+		return
+	}
+
+	a.storage.TouchNode(nodeID)
+
+	if err := a.storage.InsertPtp4lPortEvent(ctx, timestamp, nodeID, m.Port, m.Interface, m.FromState, m.ToState, m.EventTrigger); err != nil {
+		a.logger.Error("Failed to insert ptp4l port event", zap.Error(err), zap.String("node", node))
 	}
 }
 

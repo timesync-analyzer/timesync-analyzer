@@ -2783,6 +2783,333 @@
         }
       ],
       "type": "xychart"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "FAULTY": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "FAULTY"
+                },
+                "GRAND_MASTER": {
+                  "color": "dark-green",
+                  "index": 1,
+                  "text": "GRAND_MASTER"
+                },
+                "LISTENING": {
+                  "color": "blue",
+                  "index": 2,
+                  "text": "LISTENING"
+                },
+                "MASTER": {
+                  "color": "green",
+                  "index": 3,
+                  "text": "MASTER"
+                },
+                "PASSIVE": {
+                  "color": "grey",
+                  "index": 4,
+                  "text": "PASSIVE"
+                },
+                "PRE_MASTER": {
+                  "color": "light-yellow",
+                  "index": 5,
+                  "text": "PRE_MASTER"
+                },
+                "SLAVE": {
+                  "color": "purple",
+                  "index": 6,
+                  "text": "SLAVE"
+                },
+                "UNCALIBRATED": {
+                  "color": "yellow",
+                  "index": 7,
+                  "text": "UNCALIBRATED"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "to_state"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "${__series.name}"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 141
+      },
+      "id": 27,
+      "options": {
+        "alignValue": "center",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "mergeValues": true,
+        "rowHeight": 0.9,
+        "showValue": "always",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH last_before AS (\n  SELECT DISTINCT ON (n.hostname, e.port)\n    $__timeFrom()::timestamptz AS time,\n    n.hostname || ' port ' || e.port::text || ' (' || COALESCE(e.interface, '') || ')' AS series,\n    e.to_state\n  FROM timesync.ptp4l_port_events e\n  JOIN timesync.nodes n ON n.node_id = e.node_id\n  WHERE e.time < $__timeFrom()\n    AND n.hostname ~ '${node:pipe}'\n    AND e.port > 0\n  ORDER BY n.hostname, e.port, e.time DESC\n)\nSELECT\n  e.time,\n  n.hostname || ' port ' || e.port::text || ' (' || COALESCE(e.interface, '') || ')' AS series,\n  e.to_state\nFROM timesync.ptp4l_port_events e\nJOIN timesync.nodes n ON n.node_id = e.node_id\nWHERE $__timeFilter(e.time)\n  AND n.hostname ~ '${node:pipe}'\n  AND e.port > 0\n\nUNION ALL\n\nSELECT time, series, to_state FROM last_before\n\nORDER BY time, series",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "ptp4l Port State Timeline",
+      "transformations": [
+        {
+          "id": "partitionByValues",
+          "options": {
+            "fields": [
+              "series"
+            ],
+            "keepFields": false
+          }
+        }
+      ],
+      "type": "state-timeline"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "to_state"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "FAULTY": {
+                        "color": "red",
+                        "index": 0
+                      },
+                      "GRAND_MASTER": {
+                        "color": "dark-green",
+                        "index": 1
+                      },
+                      "LISTENING": {
+                        "color": "blue",
+                        "index": 2
+                      },
+                      "MASTER": {
+                        "color": "green",
+                        "index": 3
+                      },
+                      "PASSIVE": {
+                        "color": "grey",
+                        "index": 4
+                      },
+                      "PRE_MASTER": {
+                        "color": "light-yellow",
+                        "index": 5
+                      },
+                      "SLAVE": {
+                        "color": "purple",
+                        "index": 6
+                      },
+                      "UNCALIBRATED": {
+                        "color": "yellow",
+                        "index": 7
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": false,
+                  "type": "color-background"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 200
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "hostname"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 149
+      },
+      "id": 28,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "time"
+          }
+        ]
+      },
+      "pluginVersion": "12.3.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  e.time,\n  n.hostname,\n  e.port,\n  e.interface,\n  e.from_state,\n  e.to_state,\n  e.event_trigger\nFROM timesync.ptp4l_port_events e\nJOIN timesync.nodes n ON n.node_id = e.node_id\nWHERE $__timeFilter(e.time)\n  AND n.hostname ~ '${node:pipe}'\nORDER BY e.time DESC\nLIMIT 200",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "ptp4l Port Events",
+      "type": "table"
     }
   ],
   "preload": false,
@@ -2956,5 +3283,5 @@
   "timezone": "browser",
   "title": "Анализ синхронизации",
   "uid": "sync-analysis",
-  "version": 24
+  "version": 25
 }

@@ -151,6 +151,15 @@ func (s *PostgresStorage) InsertPtp4l(ctx context.Context, ts time.Time, nodeID 
 	return err
 }
 
+func (s *PostgresStorage) InsertPtp4lPortEvent(ctx context.Context, ts time.Time, nodeID int32, portNum int32, portName string, fromState, toState, eventTrigger string) error {
+	_, err := s.pool.Exec(ctx,
+		`INSERT INTO timesync.ptp4l_port_events (time, node_id, port, interface, from_state, to_state, event_trigger)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		ts, nodeID, portNum, portName, fromState, toState, eventTrigger,
+	)
+	return err
+}
+
 func (s *PostgresStorage) InsertPps(ctx context.Context, ts time.Time, nodeID int32, offsetNs int64) error {
 	_, err := s.pool.Exec(ctx,
 		`INSERT INTO timesync.pps_metrics (time, node_id, offset_ns)
@@ -286,14 +295,14 @@ func (s *PostgresStorage) GetOffsets(ctx context.Context, table string, nodeID i
 	return result, rows.Err()
 }
 
-func (s *PostgresStorage) InsertSlideMetrics(ctx context.Context, table string, ts time.Time, nodeID int32, windowSize int, mtie int64, tdev float64) error {
+func (s *PostgresStorage) InsertSlideMetrics(ctx context.Context, table string, ts time.Time, nodeID int32, windowSize int, mtie int64, tdev float64, adev float64) error {
 	query := fmt.Sprintf(
-		`INSERT INTO %s (time, node_id, window_size, mtie_ns, tdev_ns)
-		 VALUES ($1, $2, $3, $4, $5)`,
+		`INSERT INTO %s (time, node_id, window_size, mtie_ns, tdev_ns, adev_ns)
+		 VALUES ($1, $2, $3, $4, $5, $6)`,
 		pgx.Identifier{"timesync", table}.Sanitize(),
 	)
 
-	_, err := s.pool.Exec(ctx, query, ts, nodeID, windowSize, mtie, tdev)
+	_, err := s.pool.Exec(ctx, query, ts, nodeID, windowSize, mtie, tdev, adev)
 	if err != nil {
 		s.logger.Error("can't insert quality metrics", zap.Error(err))
 	}

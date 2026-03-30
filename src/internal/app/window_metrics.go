@@ -91,9 +91,10 @@ func (s *MetricsWindowSlider) calculateSlideWindows(ctx context.Context) error {
 					tauSamples = 1
 				}
 				tdev := CalculateTDEV(samples, tauSamples)
+				adev := CalculateADEV(samples, tauSamples, float64(tau))
 
 				if err := s.storage.InsertSlideMetrics(
-					ctx, qualityTable, now, nodeID, tau, mtie, tdev,
+					ctx, qualityTable, now, nodeID, tau, mtie, tdev, adev,
 				); err != nil {
 					s.logger.Error("can't insert metrics",
 						zap.String("table", qualityTable),
@@ -199,6 +200,35 @@ func CalculateMTIE(samples []Sample, tauSeconds float64) int64 {
 	return mtie
 }
 
+func CalculateADEV(samples []Sample, tauSamples int, tauSeconds float64) float64 {
+	n := len(samples)
+	if n < 2 * tauSamples + 1 {
+		return 0
+	}
+
+	tauNs := tauSeconds * 1e9
+	if tauNs <= 0 {
+		return 0
+	}
+
+	var sumSq float64
+	var count int
+
+	for i := 0; i + 2 * tauSamples < n; i++ {
+		diff := float64(samples[i + 2 * tauSamples].OffsetNs) -
+			2 * float64(samples[i + tauSamples].OffsetNs) +
+			float64(samples[i].OffsetNs)
+		sumSq += diff * diff
+		count++
+	}
+
+	if count == 0 {
+		return 0
+	}
+
+	return math.Sqrt(sumSq / (2.0 * float64(count) * tauNs * tauNs))
+}
+
 func CalculateTDEV(samples []Sample, tauSamples int) float64 {
 	n := len(samples)
 	if n < 2*tauSamples+1 {
@@ -208,9 +238,9 @@ func CalculateTDEV(samples []Sample, tauSamples int) float64 {
 	var sumSq float64
 	var count int
 
-	for i := 0; i+2*tauSamples < n; i++ {
-		diff := float64(samples[i+2*tauSamples].OffsetNs) -
-			2*float64(samples[i+tauSamples].OffsetNs) +
+	for i := 0; i + 2 * tauSamples < n; i++ {
+		diff := float64(samples[i + 2 * tauSamples].OffsetNs) -
+			2 * float64(samples[i + tauSamples].OffsetNs) +
 			float64(samples[i].OffsetNs)
 		sumSq += diff * diff
 		count++
