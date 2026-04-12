@@ -249,7 +249,7 @@ func (s *BatchPostgresStorage) flushPhc2sys(ctx context.Context) error {
 		s.phc2sysMu.Lock()
 		s.phc2sysBuf = append(rows, s.phc2sysBuf...)
 		s.phc2sysMu.Unlock()
-		s.logger.Error("batch flush phc2sys failed", zap.Int("rows", len(rows)), zap.Error(err))
+		s.logger.Error("batch flush phc2sys failed", zap.Int("rows", len(rows)), zap.Any("rows_data", rows), zap.Error(err))
 		return err
 	}
 	return nil

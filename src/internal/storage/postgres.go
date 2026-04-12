@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -63,11 +64,11 @@ func NewPostgresStorage(ctx context.Context, cfg config.DBConfig, logger *zap.Lo
 	return s, nil
 }
 
-func (s *PostgresStorage) InsertNodeInfo(ctx context.Context, hostname string, netInterface string, ipAddress string, nodeType string) error {
+func (s *PostgresStorage) InsertNodeInfo(ctx context.Context, hostname string, netInterface string, ipAddress string) error {
 	var nodeID int32
 	err := s.pool.QueryRow(ctx,
-		`INSERT INTO timesync.nodes (hostname, interface, ip_address, type, is_active, last_seen_at)
-			VALUES ($1, $2, $3, $4, TRUE, NOW())
+		`INSERT INTO timesync.nodes (hostname, interface, ip_address, is_active, last_seen_at)
+			VALUES ($1, $2, $3, TRUE, NOW())
 			ON CONFLICT (hostname) DO UPDATE SET
 				interface = EXCLUDED.interface,
 				ip_address = EXCLUDED.ip_address,
@@ -75,7 +76,7 @@ func (s *PostgresStorage) InsertNodeInfo(ctx context.Context, hostname string, n
 				is_active = TRUE,
 				last_seen_at = NOW()
 			RETURNING node_id`,
-		hostname, netInterface, ipAddress, nodeType,
+		hostname, netInterface, ipAddress,
 	).Scan(&nodeID)
 	if err != nil {
 		return fmt.Errorf("insert node info: %w", err)
@@ -87,6 +88,27 @@ func (s *PostgresStorage) InsertNodeInfo(ctx context.Context, hostname string, n
 	s.TouchNode(nodeID)
 	return nil
 }
+
+func (s *PostgresStorage) UpdateNodeSyncRole(ctx context.Context, role string, hostname string) error {
+    var nodeID int32
+    err := s.pool.QueryRow(ctx,
+        `UPDATE timesync.nodes
+        SET type = $1
+        WHERE hostname = $2
+        RETURNING node_id`, role, hostname,
+    ).Scan(&nodeID)
+
+    if err != nil {
+        if errors.Is(err, pgx.ErrNoRows) {
+            return fmt.Errorf("node not found: %s", hostname)
+        }
+        return fmt.Errorf("update node role: %w", err)
+    }
+
+    s.TouchNode(nodeID)
+    return nil
+}
+
 
 func (s *PostgresStorage) loadNodeCache(ctx context.Context) error {
 	rows, err := s.pool.Query(ctx, "SELECT node_id, hostname FROM timesync.nodes")

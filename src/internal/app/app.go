@@ -100,7 +100,7 @@ func (a *App) handleNodeInfo(ctx context.Context, node string, m *pb.NodeInfo) {
 	}
 
 	a.logger.Info("Register new node", zap.String("node", node))
-	if err := a.storage.InsertNodeInfo(ctx, node, m.NetInterface, m.IpAddress, nodeTypeMap[m.NodeType]); err != nil {
+	if err := a.storage.InsertNodeInfo(ctx, node, m.NetInterface, m.IpAddress); err != nil {
 		a.logger.Error("Failed to insert node info metrics", zap.Error(err), zap.String("node", node))
 	}
 }

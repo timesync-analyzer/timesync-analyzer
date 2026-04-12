@@ -97,7 +97,8 @@
           "calcs": [
             "mean",
             "min",
-            "max"
+            "max",
+            "range"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -892,9 +893,10 @@
       "options": {
         "legend": {
           "calcs": [
-            "mean",
             "min",
-            "max"
+            "max",
+            "range",
+            "variance"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -1724,9 +1726,9 @@
       "options": {
         "legend": {
           "calcs": [
-            "mean",
             "min",
-            "max"
+            "max",
+            "variance"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -1939,10 +1941,10 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
+            "barAlignment": -1,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 5,
+            "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -1950,7 +1952,7 @@
               "viz": false
             },
             "insertNulls": false,
-            "lineInterpolation": "linear",
+            "lineInterpolation": "stepAfter",
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
@@ -2423,7 +2425,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 128
+        "y": 136
       },
       "id": 14,
       "options": {
@@ -2555,7 +2557,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 133
+        "y": 141
       },
       "id": 25,
       "options": {
@@ -2723,7 +2725,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 133
+        "y": 141
       },
       "id": 26,
       "options": {
@@ -2795,6 +2797,7 @@
             "mode": "fixed"
           },
           "custom": {
+            "axisPlacement": "auto",
             "fillOpacity": 70,
             "hideFrom": {
               "legend": false,
@@ -2857,7 +2860,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           }
@@ -2881,7 +2884,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 141
+        "y": 149
       },
       "id": 27,
       "options": {
@@ -2971,7 +2974,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               }
             ]
           }
@@ -3064,7 +3067,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 149
+        "y": 157
       },
       "id": 28,
       "options": {
@@ -3283,5 +3286,5 @@
   "timezone": "browser",
   "title": "Анализ синхронизации",
   "uid": "sync-analysis",
-  "version": 25
+  "version": 30
 }
