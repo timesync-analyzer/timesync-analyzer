@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
+	"net"
+	"strings"
 	"time"
 	"timesync-analyzer/src/internal/adapter"
 	"timesync-analyzer/src/internal/config"
@@ -14,11 +16,6 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 )
-
-var nodeTypeMap = map[pb.NodeType]string{
-	pb.NodeType_NODE_TYPE_MASTER: "master",
-    pb.NodeType_NODE_TYPE_SLAVE:  "slave",
-}
 
 type App struct {
 	adapter adapter.Adapter
@@ -77,8 +74,6 @@ func (a *App) Run(ctx context.Context) error {
 
 func (a *App) handleMsg(ctx context.Context, wrapper *pb.MetricsWrapper) {
 	switch wrapper.Type {
-	case pb.MessageType_MESSAGE_TYPE_NODE_INFO:
-		a.handleNodeInfo(ctx, wrapper.GetNodeName(), wrapper.GetNodeInfo())
 	case pb.MessageType_MESSAGE_TYPE_PHC2SYS:
 		a.handlePhc2sys(ctx, wrapper.GetNodeName(), wrapper.GetTimestamp().AsTime(), wrapper.GetPhc2Sys())
 	case pb.MessageType_MESSAGE_TYPE_PTP4L:
@@ -94,29 +89,49 @@ func (a *App) handleMsg(ctx context.Context, wrapper *pb.MetricsWrapper) {
 	}
 }
 
-func (a *App) handleNodeInfo(ctx context.Context, node string, m *pb.NodeInfo) {
-	if m == nil {
-		return
+func (a *App) resolveOrInsertNode(ctx context.Context, hostname string) (int32, error) {
+	nodeID, ok := a.storage.ResolveNodeID(hostname)
+	if ok {
+		return nodeID, nil
 	}
 
-	a.logger.Info("Register new node", zap.String("node", node))
-	if err := a.storage.InsertNodeInfo(ctx, node, m.NetInterface, m.IpAddress); err != nil {
-		a.logger.Error("Failed to insert node info metrics", zap.Error(err), zap.String("node", node))
+	if err := a.storage.InsertNode(ctx, hostname); err != nil {
+		return 0, fmt.Errorf("insert node %q: %w", hostname, err)
 	}
+
+	nodeID, ok = a.storage.ResolveNodeID(hostname)
+	if !ok {
+		return 0, fmt.Errorf("node %q not found after insert", hostname)
+	}
+	return nodeID, nil
 }
 
-func (a *App) handlePtp4lPortEvent(ctx context.Context, node string, timestamp time.Time, m *pb.Ptp4LPortEvent)  {
+func (a *App) handlePtp4lPortEvent(ctx context.Context, node string, timestamp time.Time, m *pb.Ptp4LPortEvent) {
 	if m == nil {
 		return
 	}
 
-	nodeID, ok := a.storage.ResolveNodeID(node)
-	if !ok {
-		a.logger.Warn("Unknown node", zap.String("hostname", node))
+	nodeID, err := a.resolveOrInsertNode(ctx, node)
+	if err != nil {
+		a.logger.Error("Failed to resolve node", zap.Error(err), zap.String("node", node))
 		return
 	}
 
 	a.storage.TouchNode(nodeID)
+
+	if !strings.Contains(m.Interface, "/") {
+		ip := ""
+		addrs, err := net.LookupHost(node)
+		if err != nil {
+			a.logger.Warn("Failed to resolve hostname", zap.Error(err), zap.String("node", node))
+		} else if len(addrs) > 0 {
+			ip = addrs[0]
+		}
+
+		if err := a.storage.UpdateNodeInfo(ctx, node, strings.ToLower(m.ToState), m.Interface, ip); err != nil {
+			a.logger.Error("Failed to update node interface", zap.Error(err), zap.String("node", node))
+		}
+	}
 
 	if err := a.storage.InsertPtp4lPortEvent(ctx, timestamp, nodeID, m.Port, m.Interface, m.FromState, m.ToState, m.EventTrigger); err != nil {
 		a.logger.Error("Failed to insert ptp4l port event", zap.Error(err), zap.String("node", node))
@@ -128,9 +143,9 @@ func (a *App) handlePtp4l(ctx context.Context, node string, timestamp time.Time,
 		return
 	}
 
-	nodeID, ok := a.storage.ResolveNodeID(node)
-	if !ok {
-		a.logger.Warn("Unknown node", zap.String("hostname", node))
+	nodeID, err := a.resolveOrInsertNode(ctx, node)
+	if err != nil {
+		a.logger.Error("Failed to resolve node", zap.Error(err), zap.String("node", node))
 		return
 	}
 
@@ -146,9 +161,9 @@ func (a *App) handlePps(ctx context.Context, node string, timestamp time.Time, m
 		return
 	}
 
-	nodeID, ok := a.storage.ResolveNodeID(node)
-	if !ok {
-		a.logger.Warn("Unknown node", zap.String("hostname", node))
+	nodeID, err := a.resolveOrInsertNode(ctx, node)
+	if err != nil {
+		a.logger.Error("Failed to resolve node", zap.Error(err), zap.String("node", node))
 		return
 	}
 
@@ -164,9 +179,9 @@ func (a *App) handlePhc2sys(ctx context.Context, node string, timestamp time.Tim
 		return
 	}
 
-	nodeID, ok := a.storage.ResolveNodeID(node)
-	if !ok {
-		a.logger.Warn("Unknown node", zap.String("hostname", node))
+	nodeID, err := a.resolveOrInsertNode(ctx, node)
+	if err != nil {
+		a.logger.Error("Failed to resolve node", zap.Error(err), zap.String("node", node))
 		return
 	}
 
@@ -182,9 +197,9 @@ func (a *App) handleSystem(ctx context.Context, node string, timestamp time.Time
 		return
 	}
 
-	nodeID, ok := a.storage.ResolveNodeID(node)
-	if !ok {
-		a.logger.Warn("Unknown node", zap.String("hostname", node))
+	nodeID, err := a.resolveOrInsertNode(ctx, node)
+	if err != nil {
+		a.logger.Error("Failed to resolve node", zap.Error(err), zap.String("node", node))
 		return
 	}
 

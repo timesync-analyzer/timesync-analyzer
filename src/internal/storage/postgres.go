@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -64,22 +63,19 @@ func NewPostgresStorage(ctx context.Context, cfg config.DBConfig, logger *zap.Lo
 	return s, nil
 }
 
-func (s *PostgresStorage) InsertNodeInfo(ctx context.Context, hostname string, netInterface string, ipAddress string) error {
+func (s *PostgresStorage) InsertNode(ctx context.Context, hostname string) error {
 	var nodeID int32
 	err := s.pool.QueryRow(ctx,
-		`INSERT INTO timesync.nodes (hostname, interface, ip_address, is_active, last_seen_at)
-			VALUES ($1, $2, $3, TRUE, NOW())
+		`INSERT INTO timesync.nodes (hostname, is_active, last_seen_at)
+			VALUES ($1, TRUE, NOW())
 			ON CONFLICT (hostname) DO UPDATE SET
-				interface = EXCLUDED.interface,
-				ip_address = EXCLUDED.ip_address,
-				type = EXCLUDED.type,
 				is_active = TRUE,
 				last_seen_at = NOW()
 			RETURNING node_id`,
-		hostname, netInterface, ipAddress,
+		hostname,
 	).Scan(&nodeID)
 	if err != nil {
-		return fmt.Errorf("insert node info: %w", err)
+		return fmt.Errorf("insert node: %w", err)
 	}
 
 	s.nodeMu.Lock()
@@ -89,26 +85,27 @@ func (s *PostgresStorage) InsertNodeInfo(ctx context.Context, hostname string, n
 	return nil
 }
 
-func (s *PostgresStorage) UpdateNodeSyncRole(ctx context.Context, role string, hostname string) error {
-    var nodeID int32
-    err := s.pool.QueryRow(ctx,
-        `UPDATE timesync.nodes
-        SET type = $1
-        WHERE hostname = $2
-        RETURNING node_id`, role, hostname,
-    ).Scan(&nodeID)
+func (s *PostgresStorage) UpdateNodeInfo(ctx context.Context, hostname string, role string, netInterface string, ipAddress string) error {
+	var nodeID int32
+	err := s.pool.QueryRow(ctx,
+		`UPDATE timesync.nodes
+			SET interface = $2,
+				ip_address = $3,
+				type = $4,
+				last_seen_at = NOW()
+			WHERE hostname = $1
+			RETURNING node_id`,
+		hostname, netInterface, ipAddress, role,
+	).Scan(&nodeID)
+	if err != nil {
+		return fmt.Errorf("update node interface: %w", err)
+	}
 
-    if err != nil {
-        if errors.Is(err, pgx.ErrNoRows) {
-            return fmt.Errorf("node not found: %s", hostname)
-        }
-        return fmt.Errorf("update node role: %w", err)
-    }
-
-    s.TouchNode(nodeID)
-    return nil
+	s.nodeMu.Lock()
+	s.nodeCache[hostname] = nodeID
+	s.nodeMu.Unlock()
+	return nil
 }
-
 
 func (s *PostgresStorage) loadNodeCache(ctx context.Context) error {
 	rows, err := s.pool.Query(ctx, "SELECT node_id, hostname FROM timesync.nodes")

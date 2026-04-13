@@ -3113,6 +3113,1098 @@
       ],
       "title": "ptp4l Port Events",
       "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ns"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 165
+      },
+      "id": 29,
+      "interval": "1s",
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "min",
+            "max",
+            "range"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.3",
+      "repeat": "ptp4l_node_type",
+      "repeatDirection": "v",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "interval": "3s",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' ptp4l' AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.ptp4l_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}' AND n.type = '${ptp4l_node_type}'\nGROUP BY 1, 2\nUNION ALL\nSELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' pps' AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.pps_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}' AND n.type = '${ptp4l_node_type}'\nGROUP BY 1, 2\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "ptp4l & PPS Offset — ${ptp4l_node_type}",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "right",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": -1000
+              },
+              {
+                "color": "green",
+                "value": -500
+              },
+              {
+                "color": "yellow",
+                "value": 500
+              },
+              {
+                "color": "red",
+                "value": 1000
+              }
+            ]
+          },
+          "unit": "ns"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "hostname"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "auto"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": true,
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "master": {
+                        "color": "blue",
+                        "index": 0
+                      },
+                      "slave": {
+                        "color": "purple",
+                        "index": 1
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byType",
+              "options": "number"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": false,
+                  "type": "color-background"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 173
+      },
+      "id": 30,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "type"
+          }
+        ]
+      },
+      "pluginVersion": "12.3.3",
+      "repeat": "ptp4l_has_data",
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  n.hostname,\n  n.type::text AS type,\n  'ptp4l' AS source,\n  round(avg(abs(offset_ns))) AS \"Avg abs\",\n  min(offset_ns) AS \"Min\",\n  max(offset_ns) AS \"Max\",\n  round(sqrt(avg(power(offset_ns::float8, 2)))) AS \"RMS\"\nFROM timesync.ptp4l_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY n.hostname, n.type\nUNION ALL\nSELECT\n  n.hostname,\n  n.type::text AS type,\n  'pps' AS source,\n  round(avg(abs(offset_ns))) AS \"Avg abs\",\n  min(offset_ns) AS \"Min\",\n  max(offset_ns) AS \"Max\",\n  round(sqrt(avg(power(offset_ns::float8, 2)))) AS \"RMS\"\nFROM timesync.pps_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY n.hostname, n.type\nORDER BY type, hostname, source",
+          "refId": "A"
+        }
+      ],
+      "title": "ptp4l & PPS Offset — Статистика",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ns"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 178
+      },
+      "id": 31,
+      "interval": "1s",
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "min",
+            "max",
+            "range"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.3",
+      "repeat": "phc2sys_node_type",
+      "repeatDirection": "v",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "interval": "3s",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' phc2sys' AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.phc2sys_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}' AND n.type = '${phc2sys_node_type}'\nGROUP BY 1, 2\nUNION ALL\nSELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' pps' AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.pps_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}' AND n.type = '${phc2sys_node_type}'\nGROUP BY 1, 2\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "phc2sys & PPS Offset — ${phc2sys_node_type}",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "right",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": -10000
+              },
+              {
+                "color": "green",
+                "value": -5000
+              },
+              {
+                "color": "yellow",
+                "value": 5000
+              },
+              {
+                "color": "red",
+                "value": 10000
+              }
+            ]
+          },
+          "unit": "ns"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "hostname"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "auto"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": true,
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "master": {
+                        "color": "blue",
+                        "index": 0
+                      },
+                      "slave": {
+                        "color": "purple",
+                        "index": 1
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byType",
+              "options": "number"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": false,
+                  "type": "color-background"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 186
+      },
+      "id": 32,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "type"
+          }
+        ]
+      },
+      "pluginVersion": "12.3.3",
+      "repeat": "phc2sys_has_data",
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  n.hostname,\n  n.type::text AS type,\n  'phc2sys' AS source,\n  round(avg(abs(offset_ns))) AS \"Avg abs\",\n  min(offset_ns) AS \"Min\",\n  max(offset_ns) AS \"Max\",\n  round(sqrt(avg(power(offset_ns::float8, 2)))) AS \"RMS\"\nFROM timesync.phc2sys_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY n.hostname, n.type\nUNION ALL\nSELECT\n  n.hostname,\n  n.type::text AS type,\n  'pps' AS source,\n  round(avg(abs(offset_ns))) AS \"Avg abs\",\n  min(offset_ns) AS \"Min\",\n  max(offset_ns) AS \"Max\",\n  round(sqrt(avg(power(offset_ns::float8, 2)))) AS \"RMS\"\nFROM timesync.pps_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY n.hostname, n.type\nORDER BY type, hostname, source",
+          "refId": "A"
+        }
+      ],
+      "title": "phc2sys & PPS Offset — Статистика",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ns"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 191
+      },
+      "id": 33,
+      "interval": "1s",
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "min",
+            "max",
+            "range"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.3",
+      "repeat": "ptp4l_node_type",
+      "repeatDirection": "v",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "interval": "3s",
+          "rawQuery": true,
+          "rawSql": "WITH ptp AS (\n  SELECT\n    $__timeGroup(time,'$__interval') AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.ptp4l_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n),\npps AS (\n  SELECT\n    $__timeGroup(time,'$__interval') AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.pps_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n)\nSELECT\n  ptp.t AS time,\n  n.hostname AS metric,\n  ptp.offset - pps.offset AS \"ptp4l - PPS (ns)\"\nFROM ptp\nJOIN pps ON pps.node_id = ptp.node_id AND pps.t = ptp.t\nJOIN timesync.nodes n ON n.node_id = ptp.node_id\nWHERE n.hostname ~ '${node:pipe}' AND n.type = '${ptp4l_node_type}'\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "ptp4l - PPS Offset — ${ptp4l_node_type}",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "right",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": -1000
+              },
+              {
+                "color": "green",
+                "value": -500
+              },
+              {
+                "color": "yellow",
+                "value": 500
+              },
+              {
+                "color": "red",
+                "value": 1000
+              }
+            ]
+          },
+          "unit": "ns"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "hostname"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "auto"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": true,
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "master": {
+                        "color": "blue",
+                        "index": 0
+                      },
+                      "slave": {
+                        "color": "purple",
+                        "index": 1
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byType",
+              "options": "number"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": false,
+                  "type": "color-background"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 199
+      },
+      "id": 34,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "type"
+          }
+        ]
+      },
+      "pluginVersion": "12.3.3",
+      "repeat": "ptp4l_has_data",
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH ptp AS (\n  SELECT\n    date_trunc('minute', time) AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.ptp4l_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n),\npps AS (\n  SELECT\n    date_trunc('minute', time) AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.pps_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n),\ndiff AS (\n  SELECT ptp.node_id, ptp.offset - pps.offset AS delta\n  FROM ptp JOIN pps ON pps.node_id = ptp.node_id AND pps.t = ptp.t\n)\nSELECT\n  n.hostname,\n  n.type::text AS type,\n  round(avg(abs(delta))) AS \"Avg abs\",\n  min(delta) AS \"Min\",\n  max(delta) AS \"Max\",\n  round(sqrt(avg(power(delta::float8, 2)))) AS \"RMS\"\nFROM diff\nJOIN timesync.nodes n ON n.node_id = diff.node_id\nWHERE n.hostname ~ '${node:pipe}'\nGROUP BY n.hostname, n.type\nORDER BY n.type, n.hostname",
+          "refId": "A"
+        }
+      ],
+      "title": "ptp4l - PPS Offset — Статистика",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ns"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 204
+      },
+      "id": 35,
+      "interval": "1s",
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "min",
+            "max",
+            "range"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.3",
+      "repeat": "phc2sys_node_type",
+      "repeatDirection": "v",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "interval": "3s",
+          "rawQuery": true,
+          "rawSql": "WITH phc AS (\n  SELECT\n    $__timeGroup(time,'$__interval') AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.phc2sys_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n),\npps AS (\n  SELECT\n    $__timeGroup(time,'$__interval') AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.pps_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n)\nSELECT\n  phc.t AS time,\n  n.hostname AS metric,\n  phc.offset - pps.offset AS \"phc2sys - PPS (ns)\"\nFROM phc\nJOIN pps ON pps.node_id = phc.node_id AND pps.t = phc.t\nJOIN timesync.nodes n ON n.node_id = phc.node_id\nWHERE n.hostname ~ '${node:pipe}' AND n.type = '${phc2sys_node_type}'\nORDER BY 1",
+          "refId": "A"
+        }
+      ],
+      "title": "phc2sys - PPS Offset — ${phc2sys_node_type}",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "right",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": -10000
+              },
+              {
+                "color": "green",
+                "value": -5000
+              },
+              {
+                "color": "yellow",
+                "value": 5000
+              },
+              {
+                "color": "red",
+                "value": 10000
+              }
+            ]
+          },
+          "unit": "ns"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "hostname"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "auto"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": true,
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "master": {
+                        "color": "blue",
+                        "index": 0
+                      },
+                      "slave": {
+                        "color": "purple",
+                        "index": 1
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byType",
+              "options": "number"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": false,
+                  "type": "color-background"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 212
+      },
+      "id": 36,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "type"
+          }
+        ]
+      },
+      "pluginVersion": "12.3.3",
+      "repeat": "phc2sys_has_data",
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH phc AS (\n  SELECT\n    date_trunc('minute', time) AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.phc2sys_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n),\npps AS (\n  SELECT\n    date_trunc('minute', time) AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.pps_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n),\ndiff AS (\n  SELECT phc.node_id, phc.offset - pps.offset AS delta\n  FROM phc JOIN pps ON pps.node_id = phc.node_id AND pps.t = phc.t\n)\nSELECT\n  n.hostname,\n  n.type::text AS type,\n  round(avg(abs(delta))) AS \"Avg abs\",\n  min(delta) AS \"Min\",\n  max(delta) AS \"Max\",\n  round(sqrt(avg(power(delta::float8, 2)))) AS \"RMS\"\nFROM diff\nJOIN timesync.nodes n ON n.node_id = diff.node_id\nWHERE n.hostname ~ '${node:pipe}'\nGROUP BY n.hostname, n.type\nORDER BY n.type, n.hostname",
+          "refId": "A"
+        }
+      ],
+      "title": "phc2sys - PPS Offset — Статистика",
+      "type": "table"
     }
   ],
   "preload": false,
@@ -3286,5 +4378,5 @@
   "timezone": "browser",
   "title": "Анализ синхронизации",
   "uid": "sync-analysis",
-  "version": 30
+  "version": 32
 }
