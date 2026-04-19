@@ -140,7 +140,9 @@ func (s *BatchPostgresStorage) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			s.FlushAll(context.Background())
+			shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			s.FlushAll(shutdownCtx)
 			return nil
 		case <-ticker.C:
 			if err := s.FlushAll(ctx); err != nil {

@@ -85,17 +85,17 @@ func (s *PostgresStorage) InsertNode(ctx context.Context, hostname string) error
 	return nil
 }
 
-func (s *PostgresStorage) UpdateNodeInfo(ctx context.Context, hostname string, role string, netInterface string, ipAddress string) error {
+func (s *PostgresStorage) UpdateNodeInfo(ctx context.Context, hostname string, role string, netInterface string, adapterName string) error {
 	var nodeID int32
 	err := s.pool.QueryRow(ctx,
 		`UPDATE timesync.nodes
 			SET interface = $2,
-				ip_address = $3,
-				type = $4,
+				type = $3,
+				adapter_name = $4,
 				last_seen_at = NOW()
 			WHERE hostname = $1
 			RETURNING node_id`,
-		hostname, netInterface, ipAddress, role,
+		hostname, netInterface, role, adapterName,
 	).Scan(&nodeID)
 	if err != nil {
 		return fmt.Errorf("update node interface: %w", err)
@@ -314,14 +314,13 @@ func (s *PostgresStorage) GetOffsets(ctx context.Context, table string, nodeID i
 	return result, rows.Err()
 }
 
-func (s *PostgresStorage) InsertSlideMetrics(ctx context.Context, table string, ts time.Time, nodeID int32, windowSize int, mtie int64, tdev float64, adev float64) error {
-	query := fmt.Sprintf(
-		`INSERT INTO %s (time, node_id, window_size, mtie_ns, tdev_ns, adev_ns)
-		 VALUES ($1, $2, $3, $4, $5, $6)`,
-		pgx.Identifier{"timesync", table}.Sanitize(),
+func (s *PostgresStorage) InsertSlideMetrics(ctx context.Context, protocol string, ts time.Time, nodeID int32, windowSize int, mtie int64, tdev float64, adev float64) error {
+	_, err := s.pool.Exec(ctx,
+		`INSERT INTO timesync.quality_metrics (time, sync_protocol, node_id, window_size_s, mtie_ns, tdev_ns, adev_ns)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		ts, protocol, nodeID, windowSize, mtie, tdev, adev,
 	)
 
-	_, err := s.pool.Exec(ctx, query, ts, nodeID, windowSize, mtie, tdev, adev)
 	if err != nil {
 		s.logger.Error("can't insert quality metrics", zap.Error(err))
 	}

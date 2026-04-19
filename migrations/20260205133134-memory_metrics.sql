@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS timesync.memory_metrics (
     time TIMESTAMPTZ NOT NULL,
     node_id INTEGER NOT NULL,
-    mem_available_kb FLOAT,
+    mem_available_kb BIGINT,
     mem_free_kb BIGINT,
     swap_total_kb BIGINT,
     swap_free_kb BIGINT,
@@ -12,14 +12,15 @@ CREATE TABLE IF NOT EXISTS timesync.memory_metrics (
     FOREIGN KEY (node_id) REFERENCES timesync.nodes(node_id)
 );
 
-SELECT create_hypertable('timesync.memory_metrics', 'time');
+SELECT create_hypertable('timesync.memory_metrics', 'time',
+                         chunk_time_interval => INTERVAL '6 hours');
 
 ALTER TABLE timesync.memory_metrics SET (
     timescaledb.compress,
     timescaledb.compress_segmentby = 'node_id',
     timescaledb.compress_orderby = 'time DESC'
 );
-SELECT add_compression_policy('timesync.memory_metrics', INTERVAL '10 minutes');
+SELECT add_compression_policy('timesync.memory_metrics', INTERVAL '1 hour');
 
 COMMENT ON TABLE timesync.memory_metrics IS 'Метрики RAM';
 COMMENT ON COLUMN timesync.memory_metrics.time IS 'Время прихода метрики';

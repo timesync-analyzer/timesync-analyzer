@@ -10,14 +10,15 @@ CREATE TABLE IF NOT EXISTS timesync.ptp4l_metrics (
     FOREIGN KEY (node_id) REFERENCES timesync.nodes(node_id)
 );
 
-SELECT create_hypertable('timesync.ptp4l_metrics', 'time');
+SELECT create_hypertable('timesync.ptp4l_metrics', 'time',
+                         chunk_time_interval => INTERVAL '1 hour');
 
 ALTER TABLE timesync.ptp4l_metrics SET (
     timescaledb.compress,
     timescaledb.compress_segmentby = 'node_id',
     timescaledb.compress_orderby = 'time DESC'
 );
-SELECT add_compression_policy('timesync.ptp4l_metrics', INTERVAL '10 minutes');
+SELECT add_compression_policy('timesync.ptp4l_metrics', INTERVAL '1 hour');
 
 COMMENT ON TABLE timesync.ptp4l_metrics IS 'Метрики по ptp4l синхронизации';
 COMMENT ON COLUMN timesync.ptp4l_metrics.time IS 'Время прихода метрики';
@@ -26,7 +27,7 @@ COMMENT ON COLUMN timesync.ptp4l_metrics.offset_ns IS 'Смещение в на�
 COMMENT ON COLUMN timesync.ptp4l_metrics.frequency IS 'Частота';
 COMMENT ON COLUMN timesync.ptp4l_metrics.path_delay IS 'Задержка пути в наносекундах';
 
-CREATE UNIQUE INDEX idx_ptp4l_time_node ON timesync.ptp4l_metrics (time DESC, node_id);
+CREATE UNIQUE INDEX idx_ptp4l_time_node ON timesync.ptp4l_metrics (node_id, time DESC);
 
 GRANT SELECT, INSERT, UPDATE ON timesync.ptp4l_metrics TO timesync_app;
 GRANT SELECT ON timesync.ptp4l_metrics TO timesync_user;

@@ -75,20 +75,16 @@ func main() {
 }
 
 func buildLogger(env string) *zap.Logger {
-	var logger *zap.Logger
-
 	switch env {
 	case envLocal:
-		config := zap.NewDevelopmentConfig()
-		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-		logger, _ = config.Build()
+		cfg := zap.NewDevelopmentConfig()
+		cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		return zap.Must(cfg.Build())
 	case envDev:
-		config := zap.NewProductionConfig()
-		config.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
-		logger, _ = config.Build()
-	case envProd:
-		logger, _ = zap.NewProduction()
+		cfg := zap.NewProductionConfig()
+		cfg.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
+		return zap.Must(cfg.Build())
+	default:
+		return zap.Must(zap.NewProduction())
 	}
-
-	return logger
 }

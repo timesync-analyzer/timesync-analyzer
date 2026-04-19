@@ -11,14 +11,15 @@ CREATE TABLE IF NOT EXISTS timesync.cpu_metrics (
     FOREIGN KEY (node_id) REFERENCES timesync.nodes(node_id)
 );
 
-SELECT create_hypertable('timesync.cpu_metrics', 'time');
+SELECT create_hypertable('timesync.cpu_metrics', 'time',
+                         chunk_time_interval => INTERVAL '6 hours');
 
 ALTER TABLE timesync.cpu_metrics SET (
     timescaledb.compress,
     timescaledb.compress_segmentby = 'node_id',
     timescaledb.compress_orderby = 'time DESC'
 );
-SELECT add_compression_policy('timesync.cpu_metrics', INTERVAL '10 minutes');
+SELECT add_compression_policy('timesync.cpu_metrics', INTERVAL '1 hour');
 
 COMMENT ON TABLE timesync.cpu_metrics IS 'Метрики CPU';
 COMMENT ON COLUMN timesync.cpu_metrics.time IS 'Время прихода метрики';

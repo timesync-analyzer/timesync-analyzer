@@ -10,14 +10,15 @@ CREATE TABLE IF NOT EXISTS timesync.phc2sys_metrics (
     FOREIGN KEY (node_id) REFERENCES timesync.nodes(node_id)
 );
 
-SELECT create_hypertable('timesync.phc2sys_metrics', 'time');
+SELECT create_hypertable('timesync.phc2sys_metrics', 'time',
+                         chunk_time_interval => INTERVAL '1 hour');
 
 ALTER TABLE timesync.phc2sys_metrics SET (
     timescaledb.compress,
     timescaledb.compress_segmentby = 'node_id',
     timescaledb.compress_orderby = 'time DESC'
 );
-SELECT add_compression_policy('timesync.phc2sys_metrics', INTERVAL '10 minutes');
+SELECT add_compression_policy('timesync.phc2sys_metrics', INTERVAL '1 hour');
 
 COMMENT ON TABLE timesync.phc2sys_metrics IS 'Метрики по phc2sys синхронизации';
 COMMENT ON COLUMN timesync.phc2sys_metrics.time IS 'Время прихода метрики';

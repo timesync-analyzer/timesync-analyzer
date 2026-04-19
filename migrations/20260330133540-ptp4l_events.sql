@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS timesync.ptp4l_port_events (
     FOREIGN KEY (node_id) REFERENCES timesync.nodes(node_id)
 );
 
-SELECT create_hypertable('timesync.ptp4l_port_events', 'time');
+SELECT create_hypertable('timesync.ptp4l_port_events', 'time',
+                         chunk_time_interval => INTERVAL '1 hour');
 
 ALTER TABLE timesync.ptp4l_port_events SET (
     timescaledb.compress,

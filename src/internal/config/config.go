@@ -13,7 +13,13 @@ type Config struct {
 	Zmq         ZMQConfig     `yaml:"zmq"`
 	DB          DBConfig      `yaml:"storage"`
 	NodeTimeout time.Duration `yaml:"node_timeout"`
-	Slider      SliderConfig `yaml:"slider"`
+	Slider      SliderConfig  `yaml:"slider"`
+	Worker      WorkerConfig  `yaml:"worker"`
+}
+
+type WorkerConfig struct {
+	NumWorkers int `yaml:"num_workers" env:"WORKER_NUM_WORKERS" env-default:"4"`
+	QueueSize  int `yaml:"queue_size"  env:"WORKER_QUEUE_SIZE"  env-default:"1000"`
 }
 
 type SliderConfig struct {

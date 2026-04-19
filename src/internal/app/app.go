@@ -3,8 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
-	"net"
 	"strings"
+	"sync"
 	"time"
 	"timesync-analyzer/src/internal/adapter"
 	"timesync-analyzer/src/internal/config"
@@ -18,11 +18,13 @@ import (
 )
 
 type App struct {
-	adapter adapter.Adapter
-	storage storage.Storage
+	adapter             adapter.Adapter
+	storage             storage.Storage
 	windowMetricsSlider MetricsWindowSlider
-	logger  *zap.Logger
-	cfg     config.Config
+	logger              *zap.Logger
+	cfg                 config.Config
+	msgCh               chan *pb.MetricsWrapper
+	wg                  sync.WaitGroup
 }
 
 func NewApp(cfg config.Config, store storage.Storage, logger *zap.Logger) (*App, error) {
@@ -34,23 +36,33 @@ func NewApp(cfg config.Config, store storage.Storage, logger *zap.Logger) (*App,
 	slider := NewMetricsWindowSlider(store, logger, cfg.Slider.CalculateInterval, cfg.Slider.ObservationInterval)
 
 	return &App{
-		adapter: server,
+		adapter:             server,
 		windowMetricsSlider: *slider,
-		storage: store,
-		logger:  logger,
-		cfg:     cfg,
+		storage:             store,
+		logger:              logger,
+		cfg:                 cfg,
+		msgCh:               make(chan *pb.MetricsWrapper, cfg.Worker.QueueSize),
 	}, nil
 }
 
 func (a *App) Run(ctx context.Context) error {
 	defer a.adapter.Close()
 
-	go a.windowMetricsSlider.Run(ctx)
+	a.wg.Add(1)
+	go func() {
+		defer a.wg.Done()
+		if err := a.windowMetricsSlider.Run(ctx); err != nil {
+			a.logger.Error("window metrics slider error", zap.Error(err))
+		}
+	}()
+	a.startWorkers(ctx)
 
 	for {
 		select {
 		case <-ctx.Done():
 			a.logger.Info("Shutting down gracefully")
+			close(a.msgCh)
+			a.wg.Wait()
 			return ctx.Err()
 		default:
 		}
@@ -58,17 +70,38 @@ func (a *App) Run(ctx context.Context) error {
 		data, err := a.adapter.Read()
 		if err != nil {
 			if zmq4.AsErrno(err) == zmq4.Errno(zmq4.ETERM) {
+				close(a.msgCh)
+				a.wg.Wait()
 				return nil
 			}
 			continue
 		}
+
 		var wrapper pb.MetricsWrapper
 		if err := proto.Unmarshal(data, &wrapper); err != nil {
 			a.logger.Warn("Failed to unmarshal", zap.Error(err))
 			continue
 		}
 
-		a.handleMsg(ctx, &wrapper)
+		select {
+		case a.msgCh <- &wrapper:
+		default:
+			a.logger.Warn("Message queue full, dropping message",
+				zap.Int32("type", int32(wrapper.Type)),
+				zap.String("node", wrapper.GetNodeName()))
+		}
+	}
+}
+
+func (a *App) startWorkers(ctx context.Context) {
+	for range a.cfg.Worker.NumWorkers {
+		a.wg.Add(1)
+		go func() {
+			defer a.wg.Done()
+			for wrapper := range a.msgCh {
+				a.handleMsg(ctx, wrapper)
+			}
+		}()
 	}
 }
 
@@ -120,15 +153,7 @@ func (a *App) handlePtp4lPortEvent(ctx context.Context, node string, timestamp t
 	a.storage.TouchNode(nodeID)
 
 	if !strings.Contains(m.Interface, "/") {
-		ip := ""
-		addrs, err := net.LookupHost(node)
-		if err != nil {
-			a.logger.Warn("Failed to resolve hostname", zap.Error(err), zap.String("node", node))
-		} else if len(addrs) > 0 {
-			ip = addrs[0]
-		}
-
-		if err := a.storage.UpdateNodeInfo(ctx, node, strings.ToLower(m.ToState), m.Interface, ip); err != nil {
+		if err := a.storage.UpdateNodeInfo(ctx, node, strings.ToLower(m.ToState), m.Interface, m.AdapterName); err != nil {
 			a.logger.Error("Failed to update node interface", zap.Error(err), zap.String("node", node))
 		}
 	}

@@ -48,12 +48,12 @@ func (s *MetricsWindowSlider) Run(ctx context.Context) error {
 }
 
 var (
-	tauSeconds = []int{5, 7, 10, 15, 20, 30, 50, 70, 100, 150, 200, 250, 300, 400, 500, 600, 700, 750, 800, 900, 1000}
+	tauSeconds = []int{1, 2, 3, 4, 5, 7, 10, 15, 20, 30, 50, 70, 100, 150, 200, 250, 300, 400}
 
 	tables = map[string]string{
-		"ptp4l_metrics":   "ptp4l_quality_metrics",
-		"phc2sys_metrics":  "phc2sys_quality_metrics",
-		"pps_metrics":      "pps_quality_metrics",
+		"ptp4l_metrics":   "ptp4l",
+		"phc2sys_metrics":  "phc2sys",
+		"pps_metrics":      "pps",
 	}
 )
 
@@ -65,7 +65,7 @@ func (s *MetricsWindowSlider) calculateSlideWindows(ctx context.Context) error {
 
 	now := time.Now()
 
-	for metricsTable, qualityTable := range tables {
+	for metricsTable, metricsName := range tables {
 		for _, nodeID := range nodes {
 			offsets, err := s.storage.GetOffsets(ctx, metricsTable, nodeID, s.observationPeriod)
 			if err != nil {
@@ -94,10 +94,10 @@ func (s *MetricsWindowSlider) calculateSlideWindows(ctx context.Context) error {
 				adev := CalculateADEV(samples, tauSamples, float64(tau))
 
 				if err := s.storage.InsertSlideMetrics(
-					ctx, qualityTable, now, nodeID, tau, mtie, tdev, adev,
+					ctx, metricsName, now, nodeID, tau, mtie, tdev, adev,
 				); err != nil {
 					s.logger.Error("can't insert metrics",
-						zap.String("table", qualityTable),
+						zap.String("table", metricsName),
 						zap.Int32("node_id", nodeID),
 						zap.Int("tau", tau),
 						zap.Error(err),

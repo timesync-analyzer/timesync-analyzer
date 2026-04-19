@@ -14,14 +14,15 @@ CREATE TABLE IF NOT EXISTS timesync.network_metrics (
     FOREIGN KEY (node_id) REFERENCES timesync.nodes(node_id)
 );
 
-SELECT create_hypertable('timesync.network_metrics', 'time');
+SELECT create_hypertable('timesync.network_metrics', 'time',
+                         chunk_time_interval => INTERVAL '6 hours');
 
 ALTER TABLE timesync.network_metrics SET (
     timescaledb.compress,
     timescaledb.compress_segmentby = 'node_id',
     timescaledb.compress_orderby = 'time DESC'
 );
-SELECT add_compression_policy('timesync.network_metrics', INTERVAL '10 minutes');
+SELECT add_compression_policy('timesync.network_metrics', INTERVAL '1 hour');
 
 COMMENT ON TABLE timesync.network_metrics IS 'Сетевые метрики';
 COMMENT ON COLUMN timesync.network_metrics.time IS 'Время прихода метрики';

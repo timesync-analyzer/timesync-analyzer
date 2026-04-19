@@ -32,14 +32,15 @@ CREATE TABLE IF NOT EXISTS timesync.temperature_metrics (
     FOREIGN KEY (sensor_id) REFERENCES timesync.sensors(sensor_id) ON DELETE CASCADE
 );
 
-SELECT create_hypertable('timesync.temperature_metrics', 'time');
+SELECT create_hypertable('timesync.temperature_metrics', 'time',
+                         chunk_time_interval => INTERVAL '6 hours');
 
 ALTER TABLE timesync.temperature_metrics SET (
     timescaledb.compress,
     timescaledb.compress_segmentby = 'sensor_id',
     timescaledb.compress_orderby = 'time DESC'
 );
-SELECT add_compression_policy('timesync.temperature_metrics', INTERVAL '10 minutes');
+SELECT add_compression_policy('timesync.temperature_metrics', INTERVAL '1 hour');
 
 COMMENT ON TABLE timesync.temperature_metrics IS 'Метрики температуры';
 COMMENT ON COLUMN timesync.temperature_metrics.time IS 'Время измерения';
