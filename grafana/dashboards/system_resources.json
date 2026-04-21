@@ -234,7 +234,7 @@
   "time": {"from": "now-1h", "to": "now"},
   "timepicker": {},
   "timezone": "browser",
-  "title": "System Resources",
+  "title": "Нагрузка на систему",
   "uid": "system-resources",
   "version": 2
 }

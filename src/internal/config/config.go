@@ -9,10 +9,10 @@ import (
 )
 
 type Config struct {
-	Env         string        `yaml:"env"`
+	Env         string        `env:"APP_ENV"       env-default:"local"`
 	Zmq         ZMQConfig     `yaml:"zmq"`
 	DB          DBConfig      `yaml:"storage"`
-	NodeTimeout time.Duration `yaml:"node_timeout"`
+	NodeTimeout time.Duration `yaml:"node_timeout" env:"NODE_TIMEOUT" env-default:"30s"`
 	Slider      SliderConfig  `yaml:"slider"`
 	Worker      WorkerConfig  `yaml:"worker"`
 }
@@ -28,12 +28,12 @@ type SliderConfig struct {
 }
 
 type DBConfig struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
-	DBName   string `yaml:"dbname"`
-	SSLMode  string `yaml:"sslmode"`
+	Host     string      `env:"DB_HOST"     env-required:"true"`
+	Port     int         `env:"DB_PORT"     env-default:"5432"`
+	User     string      `env:"APP_USER"    env-required:"true"`
+	Password string      `env:"APP_PASSWORD" env-required:"true"`
+	DBName   string      `env:"POSTGRES_DB" env-required:"true"`
+	SSLMode  string      `env:"DB_SSLMODE"  env-default:"disable"`
 	Batch    BatchConfig `yaml:"batch"`
 }
 
@@ -50,8 +50,8 @@ func (d DBConfig) ConnString() string {
 }
 
 type ZMQConfig struct {
-	Address string `yaml:"address"`
-	Timeout time.Duration `yaml:"timeout"`
+	Address string        `env:"ZMQ_ADDRESS" env-default:"tcp://*:10000"`
+	Timeout time.Duration `yaml:"timeout" env:"ZMQ_TIMEOUT" env-default:"490ms"`
 }
 
 func MustLoad(path string) (Config) {

@@ -192,6 +192,156 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "left",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "applyToRow": true,
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "master": {
+                        "color": "blue",
+                        "index": 0
+                      },
+                      "slave": {
+                        "color": "purple",
+                        "index": 1
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "hostname"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "interface"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 30,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "type"
+          }
+        ]
+      },
+      "pluginVersion": "12.3.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  hostname,\n  type::text AS type,\n  interface,\n  adapter_name\nFROM timesync.nodes\nWHERE hostname ~ '${node:pipe}'\nORDER BY type, hostname",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Node Info",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "mode": "palette-classic"
           },
           "custom": {
@@ -250,7 +400,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 16
       },
       "id": 7,
       "interval": "1s",
@@ -362,9 +512,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
-        "y": 25
+        "y": 32
       },
       "id": 21,
       "options": {
@@ -506,9 +656,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 25
+        "w": 8,
+        "x": 8,
+        "y": 32
       },
       "id": 22,
       "options": {
@@ -564,6 +714,145 @@
         }
       ],
       "title": "phc2sys TDEV",
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "hostname",
+            "rowField": "window_size_s",
+            "valueField": "ns"
+          }
+        }
+      ],
+      "type": "xychart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "timescaledb"
+      },
+      "description": "5000s observation",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 5
+            },
+            "pointStrokeWidth": 1,
+            "scaleDistribution": {
+              "log": 10,
+              "type": "log"
+            },
+            "show": "points+lines"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "window_size_s.*"
+            },
+            "properties": [
+              {
+                "id": "custom.scaleDistribution",
+                "value": {
+                  "log": 10,
+                  "type": "log"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 32
+      },
+      "id": 37,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "mapping": "auto",
+        "series": [
+          {
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "window_size_s\\hostname"
+              }
+            }
+          }
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.3",
+      "targets": [
+        {
+          "dataset": "timesync",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH latest AS (\n    SELECT node_id, MAX(time) AS max_time\n    FROM timesync.quality_metrics\n    WHERE sync_protocol = 'phc2sys'\n    GROUP BY node_id\n)\n-- Кривые нод\nSELECT\n    n.hostname               AS hostname,\n    m.window_size_s::numeric AS window_size_s,\n    m.adev_ns                AS ns\nFROM timesync.quality_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nJOIN latest l ON m.node_id = l.node_id AND m.time = l.max_time\nWHERE m.sync_protocol = 'phc2sys'\n\nORDER BY hostname, window_size_s",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "phc2sys ADEV",
       "transformations": [
         {
           "id": "groupingToMatrix",
@@ -642,7 +931,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 33
+        "y": 40
       },
       "id": 9,
       "interval": "1s",
@@ -749,7 +1038,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 49
+        "y": 56
       },
       "id": 11,
       "interval": "1s",
@@ -882,7 +1171,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 65
+        "y": 72
       },
       "id": 1,
       "interval": "1s",
@@ -994,9 +1283,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
-        "y": 73
+        "y": 80
       },
       "id": 23,
       "options": {
@@ -1138,9 +1427,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 73
+        "w": 8,
+        "x": 8,
+        "y": 80
       },
       "id": 24,
       "options": {
@@ -1189,6 +1478,138 @@
         }
       ],
       "title": "ptp4l TDEV",
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "hostname",
+            "rowField": "window_size_s",
+            "valueField": "ns"
+          }
+        }
+      ],
+      "type": "xychart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "timescaledb"
+      },
+      "description": "5000s observation",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 5
+            },
+            "pointStrokeWidth": 1,
+            "scaleDistribution": {
+              "log": 10,
+              "type": "log"
+            },
+            "show": "points+lines"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "window_size_s.*"
+            },
+            "properties": [
+              {
+                "id": "custom.scaleDistribution",
+                "value": {
+                  "log": 10,
+                  "type": "log"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 80
+      },
+      "id": 38,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "mapping": "auto",
+        "series": [
+          {}
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.3",
+      "targets": [
+        {
+          "dataset": "timesync",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH latest AS (\n    SELECT node_id, MAX(time) AS max_time\n    FROM timesync.quality_metrics\n    WHERE sync_protocol = 'ptp4l'\n    GROUP BY node_id\n)\n-- Кривые нод\nSELECT\n    n.hostname               AS hostname,\n    m.window_size_s::numeric AS window_size_s,\n    m.adev_ns                AS ns\nFROM timesync.quality_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nJOIN latest l ON m.node_id = l.node_id AND m.time = l.max_time\nWHERE m.sync_protocol = 'ptp4l'\n\nORDER BY hostname, window_size_s",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "ptp4l ADEV",
       "transformations": [
         {
           "id": "groupingToMatrix",
@@ -1267,7 +1688,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 81
+        "y": 88
       },
       "id": 3,
       "interval": "1s",
@@ -1424,7 +1845,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 89
+        "y": 96
       },
       "id": 4,
       "options": {
@@ -1539,7 +1960,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 94
+        "y": 101
       },
       "id": 5,
       "interval": "1s",
@@ -1672,7 +2093,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 103
+        "y": 110
       },
       "id": 13,
       "interval": "1s",
@@ -1786,9 +2207,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
-        "y": 111
+        "y": 118
       },
       "id": 25,
       "options": {
@@ -1930,9 +2351,9 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 111
+        "w": 8,
+        "x": 8,
+        "y": 118
       },
       "id": 26,
       "options": {
@@ -1981,6 +2402,138 @@
         }
       ],
       "title": "pps TDEV",
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "hostname",
+            "rowField": "window_size_s",
+            "valueField": "ns"
+          }
+        }
+      ],
+      "type": "xychart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "timescaledb"
+      },
+      "description": "5000s observation",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 50,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "pointShape": "circle",
+            "pointSize": {
+              "fixed": 5
+            },
+            "pointStrokeWidth": 1,
+            "scaleDistribution": {
+              "log": 10,
+              "type": "log"
+            },
+            "show": "points+lines"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 1000
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "window_size_s.*"
+            },
+            "properties": [
+              {
+                "id": "custom.scaleDistribution",
+                "value": {
+                  "log": 10,
+                  "type": "log"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 118
+      },
+      "id": 39,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "mapping": "auto",
+        "series": [
+          {}
+        ],
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.3",
+      "targets": [
+        {
+          "dataset": "timesync",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH latest AS (\n    SELECT node_id, MAX(time) AS max_time\n    FROM timesync.quality_metrics\n    WHERE sync_protocol = 'pps'\n    GROUP BY node_id\n)\n-- Кривые нод\nSELECT\n    n.hostname               AS hostname,\n    m.window_size_s::numeric AS window_size_s,\n    m.adev_ns                AS ns\nFROM timesync.quality_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nJOIN latest l ON m.node_id = l.node_id AND m.time = l.max_time\nWHERE m.sync_protocol = 'pps'\n\nORDER BY hostname, window_size_s",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "pps ADEV",
       "transformations": [
         {
           "id": "groupingToMatrix",
@@ -2112,7 +2665,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 119
+        "y": 126
       },
       "id": 28,
       "options": {
@@ -2225,7 +2778,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 127
+        "y": 134
       },
       "id": 29,
       "interval": "1s",
@@ -2333,7 +2886,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 135
+        "y": 142
       },
       "id": 31,
       "interval": "1s",
@@ -2441,7 +2994,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 151
+        "y": 158
       },
       "id": 33,
       "interval": "1s",
@@ -2549,7 +3102,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 159
+        "y": 166
       },
       "id": 35,
       "interval": "1s",
@@ -2724,7 +3277,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 175
+        "y": 182
       },
       "id": 36,
       "options": {
@@ -2885,38 +3438,6 @@
         "refresh": 2,
         "regex": "",
         "type": "query"
-      },
-      {
-        "current": {
-          "text": "10",
-          "value": "10"
-        },
-        "label": "Window Size (s)",
-        "name": "window_size",
-        "options": [
-          {
-            "selected": false,
-            "text": "5",
-            "value": "5"
-          },
-          {
-            "selected": true,
-            "text": "10",
-            "value": "10"
-          },
-          {
-            "selected": false,
-            "text": "100",
-            "value": "100"
-          },
-          {
-            "selected": false,
-            "text": "1000",
-            "value": "1000"
-          }
-        ],
-        "query": "5,10,100,1000",
-        "type": "custom"
       }
     ]
   },
@@ -2928,5 +3449,5 @@
   "timezone": "browser",
   "title": "Анализ синхронизации",
   "uid": "sync-analysis",
-  "version": 39
+  "version": 42
 }

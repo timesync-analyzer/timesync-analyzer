@@ -48,7 +48,7 @@ func (s *MetricsWindowSlider) Run(ctx context.Context) error {
 }
 
 var (
-	tauSeconds = []int{1, 2, 3, 4, 5, 7, 10, 15, 20, 30, 50, 70, 100, 150, 200, 250, 300, 400}
+	tauSeconds = []int{1, 2, 5, 10, 20, 50, 100, 200, 500, 1000}
 
 	tables = map[string]string{
 		"ptp4l_metrics":   "ptp4l",

@@ -164,7 +164,8 @@ func (s *PostgresStorage) ResolveSensorID(ctx context.Context, nodeID int32, sen
 func (s *PostgresStorage) InsertPtp4l(ctx context.Context, ts time.Time, nodeID int32, offsetNs, frequency, pathDelay int64) error {
 	_, err := s.pool.Exec(ctx,
 		`INSERT INTO timesync.ptp4l_metrics (time, node_id, offset_ns, frequency, path_delay)
-		 VALUES ($1, $2, $3, $4, $5)`,
+		 VALUES ($1, $2, $3, $4, $5)
+		 ON CONFLICT (node_id, time) DO NOTHING`,
 		ts, nodeID, offsetNs, frequency, pathDelay,
 	)
 	return err
@@ -173,7 +174,8 @@ func (s *PostgresStorage) InsertPtp4l(ctx context.Context, ts time.Time, nodeID 
 func (s *PostgresStorage) InsertPtp4lPortEvent(ctx context.Context, ts time.Time, nodeID int32, portNum int32, portName string, fromState, toState, eventTrigger string) error {
 	_, err := s.pool.Exec(ctx,
 		`INSERT INTO timesync.ptp4l_port_events (time, node_id, port, interface, from_state, to_state, event_trigger)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		 ON CONFLICT (node_id, time) DO NOTHING`,
 		ts, nodeID, portNum, portName, fromState, toState, eventTrigger,
 	)
 	return err
@@ -182,7 +184,8 @@ func (s *PostgresStorage) InsertPtp4lPortEvent(ctx context.Context, ts time.Time
 func (s *PostgresStorage) InsertPps(ctx context.Context, ts time.Time, nodeID int32, offsetNs int64) error {
 	_, err := s.pool.Exec(ctx,
 		`INSERT INTO timesync.pps_metrics (time, node_id, offset_ns)
-		 VALUES ($1, $2, $3)`,
+		 VALUES ($1, $2, $3)
+		 ON CONFLICT (node_id, time) DO NOTHING`,
 		ts, nodeID, offsetNs,
 	)
 	return err
@@ -191,7 +194,8 @@ func (s *PostgresStorage) InsertPps(ctx context.Context, ts time.Time, nodeID in
 func (s *PostgresStorage) InsertPhc2sys(ctx context.Context, ts time.Time, nodeID int32, offsetNs, frequency, pathDelay int64) error {
 	_, err := s.pool.Exec(ctx,
 		`INSERT INTO timesync.phc2sys_metrics (time, node_id, offset_ns, frequency, path_delay)
-		 VALUES ($1, $2, $3, $4, $5)`,
+		 VALUES ($1, $2, $3, $4, $5)
+		 ON CONFLICT (node_id, time) DO NOTHING`,
 		ts, nodeID, offsetNs, frequency, pathDelay,
 	)
 	return err

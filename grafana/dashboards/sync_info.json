@@ -19,7 +19,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": null,
+  "id": 8,
   "links": [],
   "panels": [
     {
@@ -85,7 +85,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 24,
         "x": 0,
         "y": 0
@@ -95,9 +95,11 @@
       "options": {
         "legend": {
           "calcs": [
-            "last",
             "min",
-            "max"
+            "max",
+            "mean",
+            "stdDev",
+            "range"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -207,18 +209,20 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 9
       },
       "id": 2,
       "options": {
         "legend": {
           "calcs": [
-            "last",
             "min",
-            "max"
+            "max",
+            "mean",
+            "range",
+            "stdDev"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -318,6 +322,30 @@
                 "value": 80
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "interface"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 74
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "hostname"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 115
+              }
+            ]
           }
         ]
       },
@@ -325,7 +353,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 18
       },
       "id": 3,
       "options": {
@@ -345,10 +373,28 @@
             "type": "postgres",
             "uid": "timescaledb"
           },
+          "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  hostname,\n  type,\n  ip_address::text AS ip_address,\n  interface,\n  is_active,\n  last_seen_at\nFROM timesync.nodes\nORDER BY hostname",
-          "refId": "A"
+          "rawSql": "SELECT\n  hostname,\n  type,\n  interface,\n  adapter_name,\n  is_active,\n  last_seen_at\nFROM timesync.nodes\nORDER BY hostname",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
       "title": "Node Status",
@@ -417,19 +463,21 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 9,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 26
       },
       "id": 4,
       "interval": "1s",
       "options": {
         "legend": {
           "calcs": [
-            "last",
             "min",
-            "max"
+            "max",
+            "mean",
+            "range",
+            "stdDev"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -542,7 +590,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 32
+        "y": 35
       },
       "id": 5,
       "options": {
@@ -643,7 +691,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 32
+        "y": 35
       },
       "id": 6,
       "options": {
@@ -746,7 +794,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 40
+        "y": 43
       },
       "id": 7,
       "options": {
@@ -847,7 +895,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 40
+        "y": 43
       },
       "id": 8,
       "options": {

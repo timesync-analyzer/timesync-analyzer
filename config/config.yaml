@@ -1,18 +1,10 @@
-env: "local"
 node_timeout: 30s
 slider:
   calculate_interval: 10s
-  observation_interval: 900s
+  observation_interval: 1h
 zmq:
-  address: "tcp://*:10000"
   timeout: 490ms
 storage:
-  host: "localhost"
-  port: 5432
-  user: "app_user"
-  password: "secure_app_password"
-  dbname: "timesync"
-  sslmode: "disable"
   batch:
     max_size: 500
     flush_interval: 1s

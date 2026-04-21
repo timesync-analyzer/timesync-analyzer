@@ -3,14 +3,17 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"sync"
 	"syscall"
 	"timesync-analyzer/src/internal/app"
 	"timesync-analyzer/src/internal/config"
 	"timesync-analyzer/src/internal/storage"
 
+	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -23,7 +26,16 @@ const (
 
 func main() {
 	pathToConfig := flag.String("config", "config/config.yaml", "path to config")
+	envPath := flag.String("env", "", "path to .env file (defaults to <config-dir>/.env)")
 	flag.Parse()
+
+	resolvedEnv := *envPath
+	if resolvedEnv == "" {
+		resolvedEnv = filepath.Join(filepath.Dir(*pathToConfig), ".env")
+	}
+	if err := godotenv.Load(resolvedEnv); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: could not load env file %q: %v\n", resolvedEnv, err)
+	}
 
 	cfg := config.MustLoad(*pathToConfig)
 	logger := buildLogger(cfg.Env)
