@@ -62,6 +62,24 @@ services:
     environment:
       - ENABLE_METRICS=true
 
+  analyzer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: timesync-analyzer:latest
+    container_name: timesync-analyzer
+    restart: unless-stopped
+    env_file:
+      - config/.env
+    environment:
+      - DB_HOST=timescaledb
+      - DB_PORT=5432
+    ports:
+      - "${ANALYZER_ZMQ_PORT:-10000}:10000"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+
 volumes:
   timescaledb_data:
   grafana_data:

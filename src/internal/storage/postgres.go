@@ -175,7 +175,7 @@ func (s *PostgresStorage) InsertPtp4lPortEvent(ctx context.Context, ts time.Time
 	_, err := s.pool.Exec(ctx,
 		`INSERT INTO timesync.ptp4l_port_events (time, node_id, port, interface, from_state, to_state, event_trigger)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7)
-		 ON CONFLICT (node_id, time) DO NOTHING`,
+		 ON CONFLICT (time, node_id, port) DO NOTHING`,
 		ts, nodeID, portNum, portName, fromState, toState, eventTrigger,
 	)
 	return err

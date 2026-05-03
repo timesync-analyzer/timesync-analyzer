@@ -296,7 +296,7 @@
         "sortBy": [
           {
             "desc": false,
-            "displayName": "type"
+            "displayName": "adapter_name"
           }
         ]
       },
@@ -394,7 +394,32 @@
           },
           "unit": "ns"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "zip-bookworm (ptp master)"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -424,8 +449,6 @@
         }
       },
       "pluginVersion": "12.3.3",
-      "repeat": "phc2sys_node_type",
-      "repeatDirection": "v",
       "targets": [
         {
           "datasource": {
@@ -436,11 +459,11 @@
           "format": "time_series",
           "interval": "3s",
           "rawQuery": true,
-          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.phc2sys_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}' AND n.type = '${phc2sys_node_type}'\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' (ptp ' || n.type::text || ')' AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.phc2sys_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
-      "title": "phc2sys Offset — ${phc2sys_node_type}",
+      "title": "phc2sys Offset",
       "type": "timeseries"
     },
     {
@@ -514,7 +537,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 32
+        "y": 24
       },
       "id": 21,
       "options": {
@@ -658,7 +681,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 32
+        "y": 24
       },
       "id": 22,
       "options": {
@@ -797,7 +820,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 32
+        "y": 24
       },
       "id": 37,
       "options": {
@@ -925,13 +948,38 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "zip-bookworm (ptp master)"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 40
+        "y": 32
       },
       "id": 9,
       "interval": "1s",
@@ -953,8 +1001,6 @@
         }
       },
       "pluginVersion": "12.3.3",
-      "repeat": "phc2sys_node_type",
-      "repeatDirection": "v",
       "targets": [
         {
           "datasource": {
@@ -965,11 +1011,11 @@
           "format": "time_series",
           "interval": "3s",
           "rawQuery": true,
-          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname AS metric,\n  avg(frequency) AS \"Frequency\"\nFROM timesync.phc2sys_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}' AND n.type = '${phc2sys_node_type}'\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' (ptp ' || n.type::text || ')' AS metric,\n  avg(frequency) AS \"Frequency\"\nFROM timesync.phc2sys_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
-      "title": "phc2sys Frequency — ${phc2sys_node_type}",
+      "title": "phc2sys Frequency",
       "type": "timeseries"
     },
     {
@@ -1038,7 +1084,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 56
+        "y": 40
       },
       "id": 11,
       "interval": "1s",
@@ -1048,7 +1094,9 @@
             "min",
             "max",
             "range",
-            "variance"
+            "variance",
+            "stdDev",
+            "mean"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -1061,8 +1109,6 @@
         }
       },
       "pluginVersion": "12.3.3",
-      "repeat": "phc2sys_node_type",
-      "repeatDirection": "v",
       "targets": [
         {
           "datasource": {
@@ -1073,11 +1119,11 @@
           "format": "time_series",
           "interval": "3s",
           "rawQuery": true,
-          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname AS metric,\n  avg(path_delay) AS \"Path Delay (ns)\"\nFROM timesync.phc2sys_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}' AND n.type = '${phc2sys_node_type}'\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' (ptp ' || n.type::text || ')' AS metric,\n  avg(path_delay) AS \"Path Delay (ns)\"\nFROM timesync.phc2sys_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
-      "title": "phc2sys Path Delay — ${phc2sys_node_type}",
+      "title": "phc2sys Path Delay",
       "type": "timeseries"
     },
     {
@@ -1140,38 +1186,13 @@
           },
           "unit": "ns"
         },
-        "overrides": [
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "alpha"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": true,
-                  "viz": true
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 72
+        "y": 48
       },
       "id": 1,
       "interval": "1s",
@@ -1195,8 +1216,6 @@
         }
       },
       "pluginVersion": "12.3.3",
-      "repeat": "ptp4l_node_type",
-      "repeatDirection": "v",
       "targets": [
         {
           "datasource": {
@@ -1207,11 +1226,11 @@
           "format": "time_series",
           "interval": "3s",
           "rawQuery": true,
-          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.ptp4l_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}' AND n.type = '${ptp4l_node_type}'\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' (ptp ' || n.type::text || ')' AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.ptp4l_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
-      "title": "ptp4l Offset — ${ptp4l_node_type}",
+      "title": "ptp4l Offset",
       "type": "timeseries"
     },
     {
@@ -1285,7 +1304,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 80
+        "y": 56
       },
       "id": 23,
       "options": {
@@ -1429,7 +1448,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 80
+        "y": 56
       },
       "id": 24,
       "options": {
@@ -1561,7 +1580,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 80
+        "y": 56
       },
       "id": 38,
       "options": {
@@ -1688,7 +1707,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 88
+        "y": 64
       },
       "id": 3,
       "interval": "1s",
@@ -1710,8 +1729,6 @@
         }
       },
       "pluginVersion": "12.3.3",
-      "repeat": "ptp4l_node_type",
-      "repeatDirection": "v",
       "targets": [
         {
           "datasource": {
@@ -1722,177 +1739,12 @@
           "format": "time_series",
           "interval": "3s",
           "rawQuery": true,
-          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname AS metric,\n  avg(frequency) AS \"Frequency\"\nFROM timesync.ptp4l_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}' AND n.type = '${ptp4l_node_type}'\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' (ptp ' || n.type::text || ')' AS metric,\n  avg(frequency) AS \"Frequency\"\nFROM timesync.ptp4l_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
-      "title": "ptp4l Frequency — ${ptp4l_node_type}",
+      "title": "ptp4l Frequency",
       "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "timescaledb"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "right",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "footer": {
-              "reducers": []
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "hostname"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 150
-              },
-              {
-                "id": "custom.align",
-                "value": "left"
-              },
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "auto"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "type"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 80
-              },
-              {
-                "id": "custom.align",
-                "value": "left"
-              },
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "applyToRow": true,
-                  "type": "color-background"
-                }
-              },
-              {
-                "id": "mappings",
-                "value": [
-                  {
-                    "options": {
-                      "master": {
-                        "color": "blue",
-                        "index": 0
-                      },
-                      "slave": {
-                        "color": "purple",
-                        "index": 1
-                      }
-                    },
-                    "type": "value"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byType",
-              "options": "number"
-            },
-            "properties": [
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "color-background"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 24,
-        "x": 0,
-        "y": 96
-      },
-      "id": 4,
-      "options": {
-        "cellHeight": "sm",
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": false,
-            "displayName": "type"
-          }
-        ]
-      },
-      "pluginVersion": "12.3.3",
-      "repeat": "ptp4l_has_data",
-      "repeatDirection": "h",
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "timescaledb"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  n.hostname,\n  n.type::text AS type,\n  round(avg(abs(frequency))) AS \"Avg\",\n  min(frequency) AS \"Min\",\n  max(frequency) AS \"Max\",\n  round(sqrt(avg(power(frequency::float8, 2)))) AS \"RMS\"\nFROM timesync.ptp4l_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY n.hostname, n.type\nORDER BY n.type, n.hostname",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        }
-      ],
-      "title": "ptp4l Frequency — Статистика",
-      "type": "table"
     },
     {
       "datasource": {
@@ -1960,7 +1812,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 101
+        "y": 72
       },
       "id": 5,
       "interval": "1s",
@@ -1969,7 +1821,9 @@
           "calcs": [
             "mean",
             "min",
-            "max"
+            "max",
+            "stdDev",
+            "range"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -1982,8 +1836,6 @@
         }
       },
       "pluginVersion": "12.3.3",
-      "repeat": "ptp4l_node_type",
-      "repeatDirection": "v",
       "targets": [
         {
           "datasource": {
@@ -1994,11 +1846,11 @@
           "format": "time_series",
           "interval": "3s",
           "rawQuery": true,
-          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname AS metric,\n  avg(path_delay) AS \"Path Delay (ns)\"\nFROM timesync.ptp4l_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}' AND n.type = '${ptp4l_node_type}'\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' (ptp ' || n.type::text || ')' AS metric,\n  avg(path_delay) AS \"Path Delay (ns)\"\nFROM timesync.ptp4l_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
-      "title": "ptp4l Path Delay — ${ptp4l_node_type}",
+      "title": "ptp4l Path Delay",
       "type": "timeseries"
     },
     {
@@ -2062,38 +1914,13 @@
           },
           "unit": "ns"
         },
-        "overrides": [
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "alpha"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": true,
-                  "viz": true
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 110
+        "y": 81
       },
       "id": 13,
       "interval": "1s",
@@ -2119,8 +1946,6 @@
         }
       },
       "pluginVersion": "12.3.3",
-      "repeat": "pps_node_type",
-      "repeatDirection": "v",
       "targets": [
         {
           "datasource": {
@@ -2131,11 +1956,11 @@
           "format": "time_series",
           "interval": "3s",
           "rawQuery": true,
-          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.pps_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}' AND n.type = '${pps_node_type}'\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' (ptp ' || n.type::text || ')' AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.pps_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
-      "title": "PPS Offset — ${pps_node_type}",
+      "title": "PPS Offset",
       "type": "timeseries"
     },
     {
@@ -2209,7 +2034,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 118
+        "y": 89
       },
       "id": 25,
       "options": {
@@ -2353,7 +2178,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 118
+        "y": 89
       },
       "id": 26,
       "options": {
@@ -2485,7 +2310,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 118
+        "y": 89
       },
       "id": 39,
       "options": {
@@ -2554,172 +2379,6 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "footer": {
-              "reducers": []
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "to_state"
-            },
-            "properties": [
-              {
-                "id": "mappings",
-                "value": [
-                  {
-                    "options": {
-                      "FAULTY": {
-                        "color": "red",
-                        "index": 0
-                      },
-                      "GRAND_MASTER": {
-                        "color": "dark-green",
-                        "index": 1
-                      },
-                      "LISTENING": {
-                        "color": "blue",
-                        "index": 2
-                      },
-                      "MASTER": {
-                        "color": "green",
-                        "index": 3
-                      },
-                      "PASSIVE": {
-                        "color": "grey",
-                        "index": 4
-                      },
-                      "PRE_MASTER": {
-                        "color": "light-yellow",
-                        "index": 5
-                      },
-                      "SLAVE": {
-                        "color": "purple",
-                        "index": 6
-                      },
-                      "UNCALIBRATED": {
-                        "color": "yellow",
-                        "index": 7
-                      }
-                    },
-                    "type": "value"
-                  }
-                ]
-              },
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "applyToRow": false,
-                  "type": "color-background"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "time"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 200
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "hostname"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 150
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 126
-      },
-      "id": 28,
-      "options": {
-        "cellHeight": "sm",
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": true,
-            "displayName": "time"
-          }
-        ]
-      },
-      "pluginVersion": "12.3.3",
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "timescaledb"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  e.time,\n  n.hostname,\n  e.port,\n  e.interface,\n  e.from_state,\n  e.to_state,\n  e.event_trigger\nFROM timesync.ptp4l_port_events e\nJOIN timesync.nodes n ON n.node_id = e.node_id\nWHERE $__timeFilter(e.time)\n  AND n.hostname ~ '${node:pipe}'\nORDER BY e.time DESC\nLIMIT 200",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        }
-      ],
-      "title": "ptp4l Port Events",
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "timescaledb"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
             "mode": "palette-classic"
           },
           "custom": {
@@ -2778,7 +2437,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 134
+        "y": 97
       },
       "id": 29,
       "interval": "1s",
@@ -2801,8 +2460,6 @@
         }
       },
       "pluginVersion": "12.3.3",
-      "repeat": "ptp4l_node_type",
-      "repeatDirection": "v",
       "targets": [
         {
           "datasource": {
@@ -2813,11 +2470,11 @@
           "format": "time_series",
           "interval": "3s",
           "rawQuery": true,
-          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' ptp4l' AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.ptp4l_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}' AND n.type = '${ptp4l_node_type}'\nGROUP BY 1, 2\nUNION ALL\nSELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' pps' AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.pps_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}' AND n.type = '${ptp4l_node_type}'\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' (ptp ' || n.type::text || ') ptp4l' AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.ptp4l_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nUNION ALL\nSELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' (ptp ' || n.type::text || ') pps' AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.pps_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
-      "title": "ptp4l & PPS Offset — ${ptp4l_node_type}",
+      "title": "ptp4l & PPS Offset",
       "type": "timeseries"
     },
     {
@@ -2886,7 +2543,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 142
+        "y": 105
       },
       "id": 31,
       "interval": "1s",
@@ -2909,8 +2566,6 @@
         }
       },
       "pluginVersion": "12.3.3",
-      "repeat": "phc2sys_node_type",
-      "repeatDirection": "v",
       "targets": [
         {
           "datasource": {
@@ -2921,11 +2576,11 @@
           "format": "time_series",
           "interval": "3s",
           "rawQuery": true,
-          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' phc2sys' AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.phc2sys_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}' AND n.type = '${phc2sys_node_type}'\nGROUP BY 1, 2\nUNION ALL\nSELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' pps' AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.pps_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}' AND n.type = '${phc2sys_node_type}'\nGROUP BY 1, 2\nORDER BY 1",
+          "rawSql": "SELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' (ptp ' || n.type::text || ') phc2sys' AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.phc2sys_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nUNION ALL\nSELECT\n  $__timeGroupAlias(time,'$__interval'),\n  n.hostname || ' (ptp ' || n.type::text || ') pps' AS metric,\n  avg(offset_ns) AS \"Offset (ns)\"\nFROM timesync.pps_metrics m\nJOIN timesync.nodes n ON n.node_id = m.node_id\nWHERE $__timeFilter(time) AND n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1",
           "refId": "A"
         }
       ],
-      "title": "phc2sys & PPS Offset — ${phc2sys_node_type}",
+      "title": "phc2sys & PPS Offset",
       "type": "timeseries"
     },
     {
@@ -2988,13 +2643,38 @@
           },
           "unit": "ns"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "hawk-d12"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 158
+        "y": 113
       },
       "id": 33,
       "interval": "1s",
@@ -3017,8 +2697,6 @@
         }
       },
       "pluginVersion": "12.3.3",
-      "repeat": "ptp4l_node_type",
-      "repeatDirection": "v",
       "targets": [
         {
           "datasource": {
@@ -3029,11 +2707,11 @@
           "format": "time_series",
           "interval": "3s",
           "rawQuery": true,
-          "rawSql": "WITH ptp AS (\n  SELECT\n    $__timeGroup(time,'$__interval') AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.ptp4l_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n),\npps AS (\n  SELECT\n    $__timeGroup(time,'$__interval') AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.pps_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n)\nSELECT\n  ptp.t AS time,\n  n.hostname AS metric,\n  ptp.offset - pps.offset AS \"ptp4l - PPS (ns)\"\nFROM ptp\nJOIN pps ON pps.node_id = ptp.node_id AND pps.t = ptp.t\nJOIN timesync.nodes n ON n.node_id = ptp.node_id\nWHERE n.hostname ~ '${node:pipe}' AND n.type = '${ptp4l_node_type}'\nORDER BY 1",
+          "rawSql": "WITH ptp AS (\n  SELECT\n    $__timeGroup(time,'$__interval') AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.ptp4l_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n),\npps AS (\n  SELECT\n    $__timeGroup(time,'$__interval') AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.pps_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n)\nSELECT\n  ptp.t AS time,\n  n.hostname || ' (ptp ' || n.type::text || ')' AS metric,\n  ptp.offset - pps.offset AS \"ptp4l - PPS (ns)\"\nFROM ptp\nJOIN pps ON pps.node_id = ptp.node_id AND pps.t = ptp.t\nJOIN timesync.nodes n ON n.node_id = ptp.node_id\nWHERE n.hostname ~ '${node:pipe}'\nORDER BY 1",
           "refId": "A"
         }
       ],
-      "title": "ptp4l - PPS Offset — ${ptp4l_node_type}",
+      "title": "ptp4l - PPS Offset",
       "type": "timeseries"
     },
     {
@@ -3102,7 +2780,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 166
+        "y": 121
       },
       "id": 35,
       "interval": "1s",
@@ -3125,8 +2803,6 @@
         }
       },
       "pluginVersion": "12.3.3",
-      "repeat": "phc2sys_node_type",
-      "repeatDirection": "v",
       "targets": [
         {
           "datasource": {
@@ -3137,11 +2813,11 @@
           "format": "time_series",
           "interval": "3s",
           "rawQuery": true,
-          "rawSql": "WITH phc AS (\n  SELECT\n    $__timeGroup(time,'$__interval') AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.phc2sys_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n),\npps AS (\n  SELECT\n    $__timeGroup(time,'$__interval') AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.pps_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n)\nSELECT\n  phc.t AS time,\n  n.hostname AS metric,\n  phc.offset - pps.offset AS \"phc2sys - PPS (ns)\"\nFROM phc\nJOIN pps ON pps.node_id = phc.node_id AND pps.t = phc.t\nJOIN timesync.nodes n ON n.node_id = phc.node_id\nWHERE n.hostname ~ '${node:pipe}' AND n.type = '${phc2sys_node_type}'\nORDER BY 1",
+          "rawSql": "WITH phc AS (\n  SELECT\n    $__timeGroup(time,'$__interval') AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.phc2sys_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n),\npps AS (\n  SELECT\n    $__timeGroup(time,'$__interval') AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.pps_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n)\nSELECT\n  phc.t AS time,\n  n.hostname || ' (ptp ' || n.type::text || ')' AS metric,\n  phc.offset - pps.offset AS \"phc2sys - PPS (ns)\"\nFROM phc\nJOIN pps ON pps.node_id = phc.node_id AND pps.t = phc.t\nJOIN timesync.nodes n ON n.node_id = phc.node_id\nWHERE n.hostname ~ '${node:pipe}'\nORDER BY 1",
           "refId": "A"
         }
       ],
-      "title": "phc2sys - PPS Offset — ${phc2sys_node_type}",
+      "title": "phc2sys - PPS Offset",
       "type": "timeseries"
     },
     {
@@ -3277,7 +2953,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 182
+        "y": 129
       },
       "id": 36,
       "options": {
@@ -3449,5 +3125,5 @@
   "timezone": "browser",
   "title": "Анализ синхронизации",
   "uid": "sync-analysis",
-  "version": 42
+  "version": 49
 }
