@@ -23,8 +23,8 @@ type WorkerConfig struct {
 }
 
 type SliderConfig struct {
-	CalculateInterval time.Duration `yaml:"calculate_interval"`
-	ObservationInterval  time.Duration `yaml:"observation_interval"`
+	CalculateInterval   time.Duration `yaml:"calculate_interval"`
+	ObservationInterval time.Duration `yaml:"observation_interval"`
 }
 
 type DBConfig struct {
@@ -38,8 +38,8 @@ type DBConfig struct {
 }
 
 type BatchConfig struct {
-	MaxSize        int `yaml:"max_size"`
-	FlushInterval  time.Duration `yaml:"flush_interval"`
+	MaxSize       int           `yaml:"max_size"`
+	FlushInterval time.Duration `yaml:"flush_interval"`
 }
 
 func (d DBConfig) ConnString() string {
@@ -54,13 +54,13 @@ type ZMQConfig struct {
 	Timeout time.Duration `yaml:"timeout" env:"ZMQ_TIMEOUT" env-default:"490ms"`
 }
 
-func MustLoad(path string) (Config) {
+func MustLoad(path string) Config {
 	if path == "" {
 		panic("path to config is empty")
 	}
 
 	if _, err := os.Stat(path); err != nil {
-		panic(fmt.Sprintf("config with path \"%s\" doesn't exist", path));
+		panic(fmt.Sprintf("config with path \"%s\" doesn't exist", path))
 	}
 
 	var cfg Config

@@ -52,8 +52,8 @@ var (
 
 	tables = map[string]string{
 		"ptp4l_metrics":   "ptp4l",
-		"phc2sys_metrics":  "phc2sys",
-		"pps_metrics":      "pps",
+		"phc2sys_metrics": "phc2sys",
+		"pps_metrics":     "pps",
 	}
 )
 
@@ -202,7 +202,7 @@ func CalculateMTIE(samples []Sample, tauSeconds float64) int64 {
 
 func CalculateADEV(samples []Sample, tauSamples int, tauSeconds float64) float64 {
 	n := len(samples)
-	if n < 2 * tauSamples + 1 {
+	if n < 2*tauSamples+1 {
 		return 0
 	}
 
@@ -214,9 +214,9 @@ func CalculateADEV(samples []Sample, tauSamples int, tauSeconds float64) float64
 	var sumSq float64
 	var count int
 
-	for i := 0; i + 2 * tauSamples < n; i++ {
-		diff := float64(samples[i + 2 * tauSamples].OffsetNs) -
-			2 * float64(samples[i + tauSamples].OffsetNs) +
+	for i := 0; i+2*tauSamples < n; i++ {
+		diff := float64(samples[i+2*tauSamples].OffsetNs) -
+			2*float64(samples[i+tauSamples].OffsetNs) +
 			float64(samples[i].OffsetNs)
 		sumSq += diff * diff
 		count++
@@ -238,9 +238,9 @@ func CalculateTDEV(samples []Sample, tauSamples int) float64 {
 	var sumSq float64
 	var count int
 
-	for i := 0; i + 2 * tauSamples < n; i++ {
-		diff := float64(samples[i + 2 * tauSamples].OffsetNs) -
-			2 * float64(samples[i + tauSamples].OffsetNs) +
+	for i := 0; i+2*tauSamples < n; i++ {
+		diff := float64(samples[i+2*tauSamples].OffsetNs) -
+			2*float64(samples[i+tauSamples].OffsetNs) +
 			float64(samples[i].OffsetNs)
 		sumSq += diff * diff
 		count++
