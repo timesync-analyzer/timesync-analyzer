@@ -231,18 +231,22 @@ func CalculateADEV(samples []Sample, tauSamples int, tauSeconds float64) float64
 
 func CalculateTDEV(samples []Sample, tauSamples int) float64 {
 	n := len(samples)
-	if n < 2*tauSamples+1 {
+	if n < 3*tauSamples {
 		return 0
 	}
 
 	var sumSq float64
 	var count int
 
-	for i := 0; i+2*tauSamples < n; i++ {
-		diff := float64(samples[i+2*tauSamples].OffsetNs) -
-			2*float64(samples[i+tauSamples].OffsetNs) +
-			float64(samples[i].OffsetNs)
-		sumSq += diff * diff
+	for i := 0; i+3*tauSamples <= n; i++ {
+		var sum float64
+		for j := 0; j < tauSamples; j++ {
+			diff := float64(samples[i+j+2*tauSamples].OffsetNs) -
+				2*float64(samples[i+j+tauSamples].OffsetNs) +
+				float64(samples[i+j].OffsetNs)
+			sum += diff
+		}
+		sumSq += sum * sum
 		count++
 	}
 
@@ -250,5 +254,6 @@ func CalculateTDEV(samples []Sample, tauSamples int) float64 {
 		return 0
 	}
 
-	return math.Sqrt(sumSq / (6.0 * float64(count)))
+	m := float64(tauSamples)
+	return math.Sqrt(sumSq / (6.0 * m * m * float64(count)))
 }
