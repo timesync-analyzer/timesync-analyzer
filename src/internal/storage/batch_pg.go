@@ -177,6 +177,45 @@ func (s *BatchPostgresStorage) FlushAll(ctx context.Context) error {
 	return nil
 }
 
+func (s *BatchPostgresStorage) copyViaTempTable(ctx context.Context, createTempSQL string, tempTable string, columns []string, rows pgx.CopyFromSource, insertSQL string) error {
+	conn, err := s.pool.Acquire(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Release()
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback(ctx)
+		}
+	}()
+
+	if _, err := tx.Exec(ctx, createTempSQL); err != nil {
+		return err
+	}
+
+	if _, err := tx.CopyFrom(ctx, pgx.Identifier{tempTable}, columns, rows); err != nil {
+		return err
+	}
+
+	if _, err := tx.Exec(ctx, insertSQL); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+
+	committed = true
+	return nil
+}
+
 func (s *BatchPostgresStorage) InsertPtp4l(ctx context.Context, ts time.Time, nodeID int32, offsetNs, frequency, pathDelay int64) error {
 	s.ptp4lMu.Lock()
 	s.ptp4lBuf = append(s.ptp4lBuf, ptp4lRow{ts, nodeID, offsetNs, frequency, pathDelay})
@@ -199,13 +238,18 @@ func (s *BatchPostgresStorage) flushPtp4l(ctx context.Context) error {
 		return nil
 	}
 
-	_, err := s.pool.CopyFrom(ctx,
-		pgx.Identifier{"timesync", "ptp4l_metrics"},
+	err := s.copyViaTempTable(ctx,
+		`CREATE TEMP TABLE batch_ptp4l_metrics (LIKE timesync.ptp4l_metrics INCLUDING DEFAULTS) ON COMMIT DROP`,
+		"batch_ptp4l_metrics",
 		[]string{"time", "node_id", "offset_ns", "frequency", "path_delay"},
 		pgx.CopyFromSlice(len(rows), func(i int) ([]any, error) {
 			r := rows[i]
 			return []any{r.ts, r.nodeID, r.offsetNs, r.frequency, r.pathDelay}, nil
 		}),
+		`INSERT INTO timesync.ptp4l_metrics (time, node_id, offset_ns, frequency, path_delay)
+		 SELECT time, node_id, offset_ns, frequency, path_delay
+		 FROM batch_ptp4l_metrics
+		 ON CONFLICT (node_id, time) DO NOTHING`,
 	)
 	if err != nil {
 		s.ptp4lMu.Lock()
@@ -239,13 +283,18 @@ func (s *BatchPostgresStorage) flushPhc2sys(ctx context.Context) error {
 		return nil
 	}
 
-	_, err := s.pool.CopyFrom(ctx,
-		pgx.Identifier{"timesync", "phc2sys_metrics"},
+	err := s.copyViaTempTable(ctx,
+		`CREATE TEMP TABLE batch_phc2sys_metrics (LIKE timesync.phc2sys_metrics INCLUDING DEFAULTS) ON COMMIT DROP`,
+		"batch_phc2sys_metrics",
 		[]string{"time", "node_id", "offset_ns", "frequency", "path_delay"},
 		pgx.CopyFromSlice(len(rows), func(i int) ([]any, error) {
 			r := rows[i]
 			return []any{r.ts, r.nodeID, r.offsetNs, r.frequency, r.pathDelay}, nil
 		}),
+		`INSERT INTO timesync.phc2sys_metrics (time, node_id, offset_ns, frequency, path_delay)
+		 SELECT time, node_id, offset_ns, frequency, path_delay
+		 FROM batch_phc2sys_metrics
+		 ON CONFLICT (node_id, time) DO NOTHING`,
 	)
 	if err != nil {
 		s.phc2sysMu.Lock()
@@ -279,13 +328,18 @@ func (s *BatchPostgresStorage) flushPPS(ctx context.Context) error {
 		return nil
 	}
 
-	_, err := s.pool.CopyFrom(ctx,
-		pgx.Identifier{"timesync", "pps_metrics"},
+	err := s.copyViaTempTable(ctx,
+		`CREATE TEMP TABLE batch_pps_metrics (LIKE timesync.pps_metrics INCLUDING DEFAULTS) ON COMMIT DROP`,
+		"batch_pps_metrics",
 		[]string{"time", "node_id", "offset_ns"},
 		pgx.CopyFromSlice(len(rows), func(i int) ([]any, error) {
 			r := rows[i]
 			return []any{r.ts, r.nodeID, r.offsetNs}, nil
 		}),
+		`INSERT INTO timesync.pps_metrics (time, node_id, offset_ns)
+		 SELECT time, node_id, offset_ns
+		 FROM batch_pps_metrics
+		 ON CONFLICT (node_id, time) DO NOTHING`,
 	)
 	if err != nil {
 		s.ppsMu.Lock()
@@ -319,13 +373,18 @@ func (s *BatchPostgresStorage) flushNetwork(ctx context.Context) error {
 		return nil
 	}
 
-	_, err := s.pool.CopyFrom(ctx,
-		pgx.Identifier{"timesync", "network_metrics"},
+	err := s.copyViaTempTable(ctx,
+		`CREATE TEMP TABLE batch_network_metrics (LIKE timesync.network_metrics INCLUDING DEFAULTS) ON COMMIT DROP`,
+		"batch_network_metrics",
 		[]string{"time", "node_id", "rx_packets", "tx_packets", "rx_dropped", "tx_dropped", "rx_errors", "tx_errors", "collisions"},
 		pgx.CopyFromSlice(len(rows), func(i int) ([]any, error) {
 			r := rows[i]
 			return []any{r.ts, r.nodeID, r.rxPackets, r.txPackets, r.rxDropped, r.txDropped, r.rxErrors, r.txErrors, r.collisions}, nil
 		}),
+		`INSERT INTO timesync.network_metrics (time, node_id, rx_packets, tx_packets, rx_dropped, tx_dropped, rx_errors, tx_errors, collisions)
+		 SELECT time, node_id, rx_packets, tx_packets, rx_dropped, tx_dropped, rx_errors, tx_errors, collisions
+		 FROM batch_network_metrics
+		 ON CONFLICT (node_id, time) DO NOTHING`,
 	)
 	if err != nil {
 		s.networkMu.Lock()
@@ -359,13 +418,18 @@ func (s *BatchPostgresStorage) flushCpu(ctx context.Context) error {
 		return nil
 	}
 
-	_, err := s.pool.CopyFrom(ctx,
-		pgx.Identifier{"timesync", "cpu_metrics"},
+	err := s.copyViaTempTable(ctx,
+		`CREATE TEMP TABLE batch_cpu_metrics (LIKE timesync.cpu_metrics INCLUDING DEFAULTS) ON COMMIT DROP`,
+		"batch_cpu_metrics",
 		[]string{"time", "node_id", "usage_percent", "context_switches", "interrupts", "softirqs"},
 		pgx.CopyFromSlice(len(rows), func(i int) ([]any, error) {
 			r := rows[i]
 			return []any{r.ts, r.nodeID, r.usagePercent, r.ctxSwitches, r.interrupts, r.softirqs}, nil
 		}),
+		`INSERT INTO timesync.cpu_metrics (time, node_id, usage_percent, context_switches, interrupts, softirqs)
+		 SELECT time, node_id, usage_percent, context_switches, interrupts, softirqs
+		 FROM batch_cpu_metrics
+		 ON CONFLICT (node_id, time) DO NOTHING`,
 	)
 	if err != nil {
 		s.cpuMu.Lock()
@@ -399,13 +463,18 @@ func (s *BatchPostgresStorage) flushMemory(ctx context.Context) error {
 		return nil
 	}
 
-	_, err := s.pool.CopyFrom(ctx,
-		pgx.Identifier{"timesync", "memory_metrics"},
+	err := s.copyViaTempTable(ctx,
+		`CREATE TEMP TABLE batch_memory_metrics (LIKE timesync.memory_metrics INCLUDING DEFAULTS) ON COMMIT DROP`,
+		"batch_memory_metrics",
 		[]string{"time", "node_id", "mem_available_kb", "mem_free_kb", "swap_total_kb", "swap_free_kb", "buffers_kb"},
 		pgx.CopyFromSlice(len(rows), func(i int) ([]any, error) {
 			r := rows[i]
-			return []any{r.ts, r.nodeID, r.memAvailableKb, r.memFreeKb, r.swapTotalKb, r.swapFreeKb, r.buffersKb}, nil
+			return []any{r.ts, r.nodeID, int64(r.memAvailableKb), r.memFreeKb, r.swapTotalKb, r.swapFreeKb, r.buffersKb}, nil
 		}),
+		`INSERT INTO timesync.memory_metrics (time, node_id, mem_available_kb, mem_free_kb, swap_total_kb, swap_free_kb, buffers_kb)
+		 SELECT time, node_id, mem_available_kb, mem_free_kb, swap_total_kb, swap_free_kb, buffers_kb
+		 FROM batch_memory_metrics
+		 ON CONFLICT (node_id, time) DO NOTHING`,
 	)
 	if err != nil {
 		s.memoryMu.Lock()
@@ -439,13 +508,17 @@ func (s *BatchPostgresStorage) flushTemperature(ctx context.Context) error {
 		return nil
 	}
 
-	_, err := s.pool.CopyFrom(ctx,
-		pgx.Identifier{"timesync", "temperature_metrics"},
+	err := s.copyViaTempTable(ctx,
+		`CREATE TEMP TABLE batch_temperature_metrics (LIKE timesync.temperature_metrics INCLUDING DEFAULTS) ON COMMIT DROP`,
+		"batch_temperature_metrics",
 		[]string{"time", "sensor_id", "temperature"},
 		pgx.CopyFromSlice(len(rows), func(i int) ([]any, error) {
 			r := rows[i]
 			return []any{r.ts, r.sensorID, r.temperature}, nil
 		}),
+		`INSERT INTO timesync.temperature_metrics (time, sensor_id, temperature)
+		 SELECT time, sensor_id, temperature
+		 FROM batch_temperature_metrics`,
 	)
 	if err != nil {
 		s.temperatureMu.Lock()

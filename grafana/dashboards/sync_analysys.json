@@ -2911,6 +2911,114 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "СКО offset, ns",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 5,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ns"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 129
+      },
+      "id": 40,
+      "interval": "1s",
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "min",
+            "max",
+            "range"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Mean",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "timescaledb"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "interval": "3s",
+          "rawQuery": true,
+          "rawSql": "WITH samples AS (\n  SELECT m.time, m.node_id, 'phc2sys'::text AS protocol, m.offset_ns\n  FROM timesync.phc2sys_metrics m\n  WHERE $__timeFilter(m.time)\n\n  UNION ALL\n\n  SELECT m.time, m.node_id, 'ptp4l'::text AS protocol, m.offset_ns\n  FROM timesync.ptp4l_metrics m\n  WHERE $__timeFilter(m.time)\n\n  UNION ALL\n\n  SELECT m.time, m.node_id, 'pps'::text AS protocol, m.offset_ns\n  FROM timesync.pps_metrics m\n  WHERE $__timeFilter(m.time)\n)\nSELECT\n  $__timeGroupAlias(s.time,'$__interval'),\n  n.hostname || ' (ptp ' || n.type::text || ') ' || s.protocol AS metric,\n  stddev_pop(s.offset_ns::double precision) AS \"СКО Offset (ns)\"\nFROM samples s\nJOIN timesync.nodes n ON n.node_id = s.node_id\nWHERE n.hostname ~ '${node:pipe}'\nGROUP BY 1, 2\nORDER BY 1, 2",
+          "refId": "A"
+        }
+      ],
+      "title": "Offset СКО — phc2sys / ptp4l / PPS",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "timescaledb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "mode": "thresholds"
           },
           "custom": {
@@ -3036,7 +3144,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 129
+        "y": 137
       },
       "id": 36,
       "options": {
