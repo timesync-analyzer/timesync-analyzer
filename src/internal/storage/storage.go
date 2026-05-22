@@ -5,6 +5,16 @@ import (
 	"time"
 )
 
+type PtpTopologySnapshot struct {
+	LocalClockIdentity  string
+	ParentClockIdentity string
+	ParentPort          int32
+	GrandmasterIdentity string
+	StepsRemoved        int32
+	PathDelayNs         int64
+	ChildPort           int32
+}
+
 type Storage interface {
 	GetNodeIDList(ctx context.Context) ([]int32, error)
 	ResolveNodeID(hostname string) (int32, bool)
@@ -20,6 +30,7 @@ type Storage interface {
 	UpdateNodeInfo(ctx context.Context, hostname string, role string, net_interface string, adapterName string) error
 	InsertNode(ctx context.Context, hostname string) error
 	InsertPtp4lPortEvent(ctx context.Context, ts time.Time, nodeID int32, portNum int32, portName string, from_state, to_state, event_trigger string) error
+	InsertPtpTopologySnapshot(ctx context.Context, ts time.Time, nodeID int32, snapshot PtpTopologySnapshot) error
 
 	GetOffsets(ctx context.Context, table string, nodeID int32, period time.Duration) ([]OffsetRow, error)
 	InsertSlideMetrics(ctx context.Context, table string, ts time.Time, nodeID int32, windowSize int, mtie int64, tdev float64, adev float64) error

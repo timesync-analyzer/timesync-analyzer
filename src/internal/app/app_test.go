@@ -100,6 +100,12 @@ type portEventInsert struct {
 	eventTrigger string
 }
 
+type ptpTopologyInsert struct {
+	ts       time.Time
+	nodeID   int32
+	snapshot storage.PtpTopologySnapshot
+}
+
 type slideMetricsInsert struct {
 	table      string
 	ts         time.Time
@@ -127,6 +133,7 @@ type fakeStorage struct {
 	temperatureInserts  []temperatureInsert
 	nodeInfoUpdates     []nodeInfoUpdate
 	portEventInserts    []portEventInsert
+	ptpTopologyInserts  []ptpTopologyInsert
 	slideMetricsInserts []slideMetricsInsert
 	ptp4lInserted       chan struct{}
 	ptp4lInsertedOnce   sync.Once
@@ -286,6 +293,14 @@ func (s *fakeStorage) InsertPtp4lPortEvent(ctx context.Context, ts time.Time, no
 		ts: ts, nodeID: nodeID, portNum: portNum, portName: portName,
 		fromState: fromState, toState: toState, eventTrigger: eventTrigger,
 	})
+	return nil
+}
+
+func (s *fakeStorage) InsertPtpTopologySnapshot(ctx context.Context, ts time.Time, nodeID int32, snapshot storage.PtpTopologySnapshot) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.ptpTopologyInserts = append(s.ptpTopologyInserts, ptpTopologyInsert{ts: ts, nodeID: nodeID, snapshot: snapshot})
 	return nil
 }
 

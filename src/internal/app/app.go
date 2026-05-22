@@ -117,6 +117,8 @@ func (a *App) handleMsg(ctx context.Context, wrapper *pb.MetricsWrapper) {
 		a.handlePps(ctx, wrapper.GetNodeName(), wrapper.GetTimestamp().AsTime(), wrapper.GetPps())
 	case pb.MessageType_MESSAGE_TYPE_PTP4L_PORT_EVENT:
 		a.handlePtp4lPortEvent(ctx, wrapper.GetNodeName(), wrapper.GetTimestamp().AsTime(), wrapper.GetPtp4LPortEvent())
+	case pb.MessageType_MESSAGE_TYPE_PTP_TOPOLOGY:
+		a.handlePtpTopology(ctx, wrapper.GetNodeName(), wrapper.GetTimestamp().AsTime(), wrapper.GetPtpTopology())
 	default:
 		a.logger.Warn("Unknown message type", zap.Int32("type", int32(wrapper.Type)))
 	}
@@ -161,6 +163,34 @@ func (a *App) handlePtp4lPortEvent(ctx context.Context, node string, timestamp t
 	if err := a.storage.InsertPtp4lPortEvent(ctx, timestamp, nodeID, m.Port, m.Interface, m.FromState, m.ToState, m.EventTrigger); err != nil {
 		a.logger.Error("Failed to insert ptp4l port event", zap.Error(err), zap.String("node", node))
 	}
+}
+
+func (a *App) handlePtpTopology(ctx context.Context, node string, timestamp time.Time, m *pb.PtpTopologySnapshot) {
+	if m == nil {
+		return
+	}
+
+	nodeID, err := a.resolveOrInsertNode(ctx, node)
+	if err != nil {
+		a.logger.Error("Failed to resolve node", zap.Error(err), zap.String("node", node))
+		return
+	}
+
+	a.storage.TouchNode(nodeID)
+
+	snapshot := storage.PtpTopologySnapshot{
+		LocalClockIdentity:  m.GetLocalClockIdentity(),
+		ParentClockIdentity: m.GetParentClockIdentity(),
+		ParentPort:          m.GetParentPort(),
+		GrandmasterIdentity: m.GetGrandmasterIdentity(),
+		StepsRemoved:        m.GetStepsRemoved(),
+		PathDelayNs:         m.GetMeanPathDelayNs(),
+		ChildPort:           m.GetChildPort(),
+	}
+	if err := a.storage.InsertPtpTopologySnapshot(ctx, timestamp, nodeID, snapshot); err != nil {
+		a.logger.Error("Failed to insert ptp topology snapshot", zap.Error(err), zap.String("node", node))
+	}
+	a.logger.Info("Handle ptp shanpshot",  zap.String("node", node))
 }
 
 func (a *App) handlePtp4l(ctx context.Context, node string, timestamp time.Time, m *pb.Ptp4LMetrics) {

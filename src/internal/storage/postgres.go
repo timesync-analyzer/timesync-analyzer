@@ -181,6 +181,129 @@ func (s *PostgresStorage) InsertPtp4lPortEvent(ctx context.Context, ts time.Time
 	return err
 }
 
+func (s *PostgresStorage) InsertPtpTopologySnapshot(ctx context.Context, ts time.Time, nodeID int32, snapshot PtpTopologySnapshot) error {
+	if snapshot.LocalClockIdentity == "" {
+		return fmt.Errorf("insert ptp topology: local clock identity is empty")
+	}
+
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("begin ptp topology tx: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	localClockID, err := upsertPtpClock(ctx, tx, snapshot.LocalClockIdentity, nodeID, "local")
+	if err != nil {
+		return err
+	}
+	parentClockID, err := upsertPtpClock(ctx, tx, snapshot.ParentClockIdentity, 0, "parent")
+	if err != nil {
+		return err
+	}
+	grandmasterClockID, err := upsertPtpClock(ctx, tx, snapshot.GrandmasterIdentity, 0, "grandmaster")
+	if err != nil {
+		return err
+	}
+
+	if snapshot.ParentClockIdentity != "" && snapshot.ParentClockIdentity != snapshot.LocalClockIdentity {
+		if err := insertPtpTopologyEdge(ctx, tx, ts, "observed",
+			localClockID, snapshot.ChildPort,
+			parentClockID, snapshot.ParentPort,
+			grandmasterClockID, snapshot.StepsRemoved, snapshot.PathDelayNs,
+		); err != nil {
+			return err
+		}
+	}
+
+	if snapshot.GrandmasterIdentity != "" &&
+		snapshot.ParentClockIdentity != "" &&
+		snapshot.GrandmasterIdentity != snapshot.ParentClockIdentity {
+		if err := insertPtpTopologyEdge(ctx, tx, ts, "inferred",
+			parentClockID, 0,
+			grandmasterClockID, 0,
+			grandmasterClockID, 0, 0,
+		); err != nil {
+			return err
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit ptp topology tx: %w", err)
+	}
+	return nil
+}
+
+func upsertPtpClock(ctx context.Context, tx pgx.Tx, clockIdentity string, nodeID int32, kind string) (int32, error) {
+	if clockIdentity == "" {
+		return 0, nil
+	}
+
+	var node any
+	if nodeID != 0 {
+		node = nodeID
+	}
+
+	var clockID int32
+	err := tx.QueryRow(ctx,
+		`INSERT INTO timesync.ptp_clocks (clock_identity, node_id, kind, first_seen_at, last_seen_at)
+		 VALUES ($1, $2, $3, NOW(), NOW())
+		 ON CONFLICT (clock_identity) DO UPDATE SET
+			node_id = COALESCE(EXCLUDED.node_id, timesync.ptp_clocks.node_id),
+			kind = EXCLUDED.kind,
+			last_seen_at = NOW()
+		 RETURNING clock_id`,
+		clockIdentity, node, kind,
+	).Scan(&clockID)
+	if err != nil {
+		return 0, fmt.Errorf("upsert ptp clock %q: %w", clockIdentity, err)
+	}
+	return clockID, nil
+}
+
+func insertPtpTopologyEdge(ctx context.Context, tx pgx.Tx, ts time.Time, edgeKind string,
+	childClockID int32, childPort int32,
+	parentClockID int32, parentPort int32,
+	grandmasterClockID int32, stepsRemoved int32, pathDelayNs int64,
+) error {
+	var childPortValue any
+	if childPort != 0 {
+		childPortValue = childPort
+	}
+	var parentPortValue any
+	if parentPort != 0 {
+		parentPortValue = parentPort
+	}
+	var grandmaster any
+	if grandmasterClockID != 0 {
+		grandmaster = grandmasterClockID
+	}
+	var steps any
+	if stepsRemoved != 0 {
+		steps = stepsRemoved
+	}
+	var pathDelay any
+	if pathDelayNs != 0 {
+		pathDelay = pathDelayNs
+	}
+
+	_, err := tx.Exec(ctx,
+		`INSERT INTO timesync.ptp_topology_edges (
+			time, edge_kind, child_clock_id, child_port,
+			parent_clock_id, parent_port,
+			grandmaster_clock_id, steps_removed, path_delay_ns, source
+		 )
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'ptp4l')
+		 ON CONFLICT (time, child_clock_id, parent_clock_id, edge_kind) DO NOTHING`,
+		ts, edgeKind, childClockID, childPortValue,
+		parentClockID, parentPortValue,
+		grandmaster, steps, pathDelay,
+	)
+	if err != nil {
+		return fmt.Errorf("insert ptp topology edge %s %d -> %d: %w", edgeKind, parentClockID, childClockID, err)
+	}
+	return nil
+}
+
 func (s *PostgresStorage) InsertPps(ctx context.Context, ts time.Time, nodeID int32, offsetNs int64) error {
 	_, err := s.pool.Exec(ctx,
 		`INSERT INTO timesync.pps_metrics (time, node_id, offset_ns)
