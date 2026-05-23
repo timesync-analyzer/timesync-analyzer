@@ -1,0 +1,521 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Ручной запуск формирования PDF-отчётов и просмотр последних задач",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 6,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "buttonGroup": {
+          "orientation": "center",
+          "size": "md"
+        },
+        "confirmModal": {
+          "body": "Please confirm to update changed values",
+          "cancel": "Cancel",
+          "columns": {
+            "include": [
+              "name",
+              "oldValue",
+              "newValue"
+            ],
+            "name": "Label",
+            "newValue": "New Value",
+            "oldValue": "Old Value"
+          },
+          "confirm": "Confirm",
+          "elementDisplayMode": "modified",
+          "title": "Confirm update request"
+        },
+        "elementValueChanged": "",
+        "elements": [
+          {
+            "id": "period",
+            "options": [
+              {
+                "label": "15 мин",
+                "value": "15m"
+              },
+              {
+                "label": "1 час",
+                "value": "1h"
+              },
+              {
+                "label": "6 часов",
+                "value": "6h"
+              },
+              {
+                "label": "24 часа",
+                "value": "24h"
+              },
+              {
+                "label": "7 дней",
+                "value": "7d"
+              },
+              {
+                "label": "Custom (From/To)",
+                "value": "custom"
+              }
+            ],
+            "title": "Период",
+            "tooltip": "Длительность отчётного окна. Игнорируется, если выбран custom — тогда используются From/To.",
+            "type": "radio",
+            "value": "1h"
+          },
+          {
+            "id": "from",
+            "placeholder": "now-1h | 2026-05-23T10:00:00Z | unix",
+            "showIf": "return context.panel.elements.find(el => el.id === 'period')?.value === 'custom';",
+            "title": "From",
+            "tooltip": "Начало диапазона. Используется только при Period=custom.",
+            "type": "string",
+            "value": ""
+          },
+          {
+            "id": "to",
+            "placeholder": "now | 2026-05-23T11:00:00Z | unix",
+            "showIf": "return context.panel.elements.find(el => el.id === 'period')?.value === 'custom';",
+            "title": "To",
+            "tooltip": "Конец диапазона. Используется только при Period=custom.",
+            "type": "string",
+            "value": ""
+          },
+          {
+            "id": "node",
+            "placeholder": ".*",
+            "title": "Node (regex)",
+            "tooltip": "Регулярное выражение для фильтра узлов PTP.",
+            "type": "string",
+            "value": ".*"
+          },
+          {
+            "allowCustomValue": false,
+            "id": "groups",
+            "options": [
+              {
+                "label": "all (все)",
+                "value": "all"
+              },
+              {
+                "label": "offset",
+                "value": "offset"
+              },
+              {
+                "label": "frequency",
+                "value": "frequency"
+              },
+              {
+                "label": "path_delay",
+                "value": "path_delay"
+              },
+              {
+                "label": "status",
+                "value": "status"
+              },
+              {
+                "label": "network",
+                "value": "network"
+              },
+              {
+                "label": "system",
+                "value": "system"
+              }
+            ],
+            "title": "Render groups",
+            "tooltip": "Какие группы графиков рендерить в PDF.",
+            "type": "multiselect",
+            "value": [
+              "offset",
+              "status"
+            ]
+          },
+          {
+            "id": "skip_charts",
+            "title": "Без графиков",
+            "tooltip": "Сформировать отчёт только из таблиц, без Grafana-графиков.",
+            "type": "boolean",
+            "value": false
+          },
+          {
+            "id": "charts_per_page",
+            "max": 8,
+            "min": 1,
+            "title": "Графиков на страницу",
+            "type": "number",
+            "value": 3
+          },
+          {
+            "id": "source",
+            "title": "Source (для лога)",
+            "type": "string",
+            "value": "manual"
+          },
+          {
+            "id": "reason",
+            "isEscaping": true,
+            "placeholder": "Зачем формируется отчёт (попадёт в лог reportd)",
+            "rows": 3,
+            "title": "Reason / комментарий",
+            "type": "textarea",
+            "value": ""
+          }
+        ],
+        "initial": {
+          "code": "",
+          "contentType": "application/json",
+          "getPayload": "return {}",
+          "highlight": true,
+          "highlightColor": "red",
+          "method": "-",
+          "payload": {},
+          "url": ""
+        },
+        "layout": {
+          "orientation": "vertical",
+          "padding": 10,
+          "sectionVariant": "default",
+          "sections": [],
+          "variant": "single"
+        },
+        "reset": {
+          "background": "purple",
+          "backgroundColor": "purple",
+          "foregroundColor": "yellow",
+          "icon": "process",
+          "text": "Сбросить",
+          "variant": "secondary"
+        },
+        "resetAction": {
+          "code": "",
+          "confirm": false,
+          "getPayload": "return {}",
+          "mode": "initial",
+          "payload": {}
+        },
+        "saveDefault": {
+          "icon": "save",
+          "text": "Save Default",
+          "variant": "hidden"
+        },
+        "submit": {
+          "background": "purple",
+          "backgroundColor": "purple",
+          "foregroundColor": "yellow",
+          "icon": "cloud-upload",
+          "text": "Сформировать отчёт",
+          "variant": "primary"
+        },
+        "sync": true,
+        "update": {
+          "code": "",
+          "confirm": false,
+          "contentType": "application/json",
+          "getPayload": "const elements = context.panel.elements;\nconst get = (id) => elements.find((el) => el.id === id)?.value;\nconst period = get('period');\nconst payload = {\n  node: get('node') || '.*',\n  groups: get('groups') || [],\n  skip_charts: !!get('skip_charts'),\n  charts_per_page: Number(get('charts_per_page')) || 3,\n  source: get('source') || 'manual',\n  reason: get('reason') || ''\n};\nif (period === 'custom') {\n  if (get('from')) payload.from = get('from');\n  if (get('to')) payload.to = get('to');\n} else {\n  payload.period = period;\n}\nreturn payload;",
+          "header": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "method": "POST",
+          "payload": {},
+          "payloadMode": "custom",
+          "url": "/api/datasources/proxy/uid/reportd/api/reports"
+        },
+        "updateEnabled": "auto"
+      },
+      "pluginVersion": "6.3.4",
+      "targets": [
+        {
+          "refId": "A"
+        }
+      ],
+      "title": "Запуск отчёта",
+      "type": "volkovlabs-form-panel"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "reportd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "PDF"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "Открыть PDF",
+                    "url": "/api/datasources/proxy/uid/reportd${__value.text}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CSV"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "Открыть CSV",
+                    "url": "/api/datasources/proxy/uid/reportd${__value.text}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "basic",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "done": {
+                        "color": "green",
+                        "index": 0
+                      }
+                    },
+                    "type": "value"
+                  },
+                  {
+                    "options": {
+                      "running": {
+                        "color": "blue",
+                        "index": 1
+                      }
+                    },
+                    "type": "value"
+                  },
+                  {
+                    "options": {
+                      "queued": {
+                        "color": "yellow",
+                        "index": 2
+                      }
+                    },
+                    "type": "value"
+                  },
+                  {
+                    "options": {
+                      "scheduled": {
+                        "color": "orange",
+                        "index": 3
+                      }
+                    },
+                    "type": "value"
+                  },
+                  {
+                    "options": {
+                      "failed": {
+                        "color": "red",
+                        "index": 4
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "id": 2,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "pluginVersion": "12.3.3",
+      "targets": [
+        {
+          "columns": [
+            {
+              "selector": "id",
+              "text": "ID",
+              "type": "string"
+            },
+            {
+              "selector": "status",
+              "text": "Status",
+              "type": "string"
+            },
+            {
+              "selector": "source",
+              "text": "Source",
+              "type": "string"
+            },
+            {
+              "selector": "created_at",
+              "text": "Created",
+              "type": "timestamp"
+            },
+            {
+              "selector": "from",
+              "text": "From",
+              "type": "timestamp"
+            },
+            {
+              "selector": "to",
+              "text": "To",
+              "type": "timestamp"
+            },
+            {
+              "selector": "node",
+              "text": "Node",
+              "type": "string"
+            },
+            {
+              "selector": "rows",
+              "text": "Rows",
+              "type": "number"
+            },
+            {
+              "selector": "charts",
+              "text": "Charts",
+              "type": "number"
+            },
+            {
+              "selector": "pdf_url",
+              "text": "PDF",
+              "type": "string"
+            },
+            {
+              "selector": "csv_url",
+              "text": "CSV",
+              "type": "string"
+            },
+            {
+              "selector": "error",
+              "text": "Error",
+              "type": "string"
+            }
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "reportd"
+          },
+          "format": "table",
+          "refId": "A",
+          "root_selector": "jobs",
+          "source": "url",
+          "type": "json",
+          "url": "/api/reports",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "Последние отчёты",
+      "type": "table"
+    }
+  ],
+  "preload": false,
+  "refresh": "10s",
+  "schemaVersion": 42,
+  "tags": [
+    "ptp",
+    "report",
+    "manual"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Формирование отчётов",
+  "uid": "ptp-report-control",
+  "version": 3
+}
