@@ -1,5 +1,6 @@
 .PHONY: proto clean proto-clean update-protocol grafana_up grafana_down \
-        docker_build analyzer_up analyzer_down analyzer_logs
+        docker_build analyzer_up analyzer_down analyzer_logs \
+        reportd_up reportd_down reportd_logs
 
 proto:
 	@echo "Generating Go code from protobuf..."
@@ -45,3 +46,12 @@ analyzer_down:
 
 analyzer_logs:
 	docker compose logs -f analyzer
+
+reportd_up:
+	docker compose --env-file ./config/.env up -d reportd
+
+reportd_down:
+	docker compose down reportd
+
+reportd_logs:
+	docker compose logs -f reportd

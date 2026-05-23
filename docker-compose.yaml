@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   timescaledb:
     image: timescale/timescaledb:latest-pg16
@@ -80,6 +78,41 @@ services:
       timescaledb:
         condition: service_healthy
 
+  reportd:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: timesync-analyzer:latest
+    container_name: timesync-reportd
+    restart: unless-stopped
+    env_file:
+      - config/.env
+    environment:
+      - DB_HOST=timescaledb
+      - DB_PORT=5432
+      - GRAFANA_URL=http://grafana:3000
+      - REPORT_TOKEN=${REPORT_TOKEN:-}
+    entrypoint: ["/app/reportd"]
+    command:
+      - "-config"
+      - "/app/config/config.yaml"
+      - "-out"
+      - "/reports"
+      - "-listen"
+      - ":8080"
+    ports:
+      - "${REPORTD_PORT:-8080}:8080"
+    volumes:
+      - reports_data:/reports
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      grafana:
+        condition: service_started
+      grafana-renderer:
+        condition: service_started
+
 volumes:
   timescaledb_data:
   grafana_data:
+  reports_data:
