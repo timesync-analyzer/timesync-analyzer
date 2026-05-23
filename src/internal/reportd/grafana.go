@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 func (s *Service) handleGrafanaAlerts(w http.ResponseWriter, r *http.Request) {
@@ -41,20 +43,61 @@ func (s *Service) handleGrafanaAlerts(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		node := firstNonEmpty(alert.Labels["node"], alert.Labels["hostname"], payload.CommonLabels["node"], payload.CommonLabels["hostname"], s.opts.Grafana.Node)
+		triggerNode := firstNonEmpty(
+			alert.Labels["node"], alert.Labels["hostname"],
+			payload.CommonLabels["node"], payload.CommonLabels["hostname"],
+		)
+		renderNode := firstNonEmpty(
+			alert.Labels["report_node"],
+			payload.CommonLabels["report_node"],
+			s.opts.Grafana.Node,
+		)
+
+		groups := s.opts.AlertGroups
+		if raw := firstNonEmpty(alert.Labels["report_groups"], payload.CommonLabels["report_groups"]); raw != "" {
+			parsed, err := ParseRenderGroups(raw)
+			if err != nil {
+				s.logger.Warn("invalid report_groups label, falling back to default",
+					zap.String("value", raw), zap.Error(err))
+			} else {
+				groups = parsed
+			}
+		}
+
+		delay := s.opts.AlertDelay
+		if raw := firstNonEmpty(alert.Labels["report_delay"], payload.CommonLabels["report_delay"]); raw != "" {
+			parsed, err := parseLooseDuration(raw)
+			if err != nil {
+				s.logger.Warn("invalid report_delay label, falling back to default",
+					zap.String("value", raw), zap.Error(err))
+			} else if parsed < 0 {
+				s.logger.Warn("negative report_delay label, ignoring", zap.String("value", raw))
+			} else {
+				delay = parsed
+			}
+		}
+
 		alertName := firstNonEmpty(alert.Labels["alertname"], payload.CommonLabels["alertname"], "grafana alert")
 		reason := alertName
+		if triggerNode != "" {
+			reason += fmt.Sprintf(" [trigger=%s]", triggerNode)
+		}
 		if alert.PanelURL != "" {
 			reason += " " + alert.PanelURL
 		}
 
+		to := now.Add(delay)
+		from := to.Add(-s.opts.AlertPeriod)
+
 		spec := createJobSpec{
-			From:             now.Add(-s.opts.AlertPeriod),
-			To:               now,
+			From:             from,
+			To:               to,
 			Period:           s.opts.AlertPeriod,
-			Node:             node,
-			Groups:           s.opts.AlertGroups,
-			GroupNames:       renderGroupNames(s.opts.AlertGroups),
+			Delay:            delay,
+			Node:             renderNode,
+			TriggerNode:      triggerNode,
+			Groups:           groups,
+			GroupNames:       renderGroupNames(groups),
 			SkipCharts:       s.opts.DefaultSkipCharts,
 			ChartsPerPage:    s.opts.ChartsPerPage,
 			Source:           "grafana_alert",

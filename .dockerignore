@@ -7,7 +7,6 @@ bin/
 *.md
 !README.md
 migrations/SCHEMA_REVIEW.md
-grafana/
 scripts/
 docker-compose*.yaml
 Dockerfile

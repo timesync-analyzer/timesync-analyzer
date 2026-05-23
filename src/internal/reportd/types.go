@@ -14,10 +14,11 @@ import (
 type jobStatus string
 
 const (
-	statusQueued  jobStatus = "queued"
-	statusRunning jobStatus = "running"
-	statusDone    jobStatus = "done"
-	statusFailed  jobStatus = "failed"
+	statusScheduled jobStatus = "scheduled"
+	statusQueued    jobStatus = "queued"
+	statusRunning   jobStatus = "running"
+	statusDone      jobStatus = "done"
+	statusFailed    jobStatus = "failed"
 )
 
 type Options struct {
@@ -30,6 +31,7 @@ type Options struct {
 	AlertGroups          report.RenderGroups
 	DefaultPeriod        time.Duration
 	AlertPeriod          time.Duration
+	AlertDelay           time.Duration
 	AlertCooldown        time.Duration
 	JobTimeout           time.Duration
 	ChartsPerPage        int
@@ -58,12 +60,14 @@ type reportJob struct {
 	Source              string               `json:"source"`
 	Status              jobStatus            `json:"status"`
 	CreatedAt           time.Time            `json:"created_at"`
+	ScheduledAt         *time.Time           `json:"scheduled_at,omitempty"`
 	StartedAt           *time.Time           `json:"started_at,omitempty"`
 	FinishedAt          *time.Time           `json:"finished_at,omitempty"`
 	From                time.Time            `json:"from"`
 	To                  time.Time            `json:"to"`
 	Period              time.Duration        `json:"-"`
 	Node                string               `json:"node"`
+	TriggerNode         string               `json:"trigger_node,omitempty"`
 	Groups              []string             `json:"groups"`
 	SkipCharts          bool                 `json:"skip_charts"`
 	ChartsPerPage       int                  `json:"charts_per_page"`
@@ -124,7 +128,9 @@ type createJobSpec struct {
 	From             time.Time
 	To               time.Time
 	Period           time.Duration
+	Delay            time.Duration
 	Node             string
+	TriggerNode      string
 	Groups           report.RenderGroups
 	GroupNames       []string
 	SkipCharts       bool

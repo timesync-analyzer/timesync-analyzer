@@ -49,16 +49,28 @@ func (s *Service) Start(ctx context.Context) {
 }
 
 func (s *Service) enqueue(spec createJobSpec) (*reportJob, error) {
-	id := fmt.Sprintf("%s-%06d", time.Now().UTC().Format("20060102T150405Z"), s.seq.Add(1))
+	now := time.Now().UTC()
+	id := fmt.Sprintf("%s-%06d", now.Format("20060102T150405Z"), s.seq.Add(1))
+
+	initialStatus := statusQueued
+	var scheduledAt *time.Time
+	if spec.Delay > 0 {
+		initialStatus = statusScheduled
+		t := now.Add(spec.Delay)
+		scheduledAt = &t
+	}
+
 	job := &reportJob{
 		ID:                  id,
 		Source:              spec.Source,
-		Status:              statusQueued,
-		CreatedAt:           time.Now().UTC(),
+		Status:              initialStatus,
+		CreatedAt:           now,
+		ScheduledAt:         scheduledAt,
 		From:                spec.From,
 		To:                  spec.To,
 		Period:              spec.Period,
 		Node:                spec.Node,
+		TriggerNode:         spec.TriggerNode,
 		Groups:              append([]string(nil), spec.GroupNames...),
 		SkipCharts:          spec.SkipCharts,
 		ChartsPerPage:       spec.ChartsPerPage,
@@ -71,13 +83,22 @@ func (s *Service) enqueue(spec createJobSpec) (*reportJob, error) {
 		Grafana:             spec.Grafana,
 	}
 
-	var response *reportJob
 	s.mu.Lock()
 	s.jobs[id] = job
 	s.jobOrder = append([]string{id}, s.jobOrder...)
 	s.trimOldJobsLocked(500)
-	response = cloneJob(job)
+	response := cloneJob(job)
 	s.mu.Unlock()
+
+	if spec.Delay > 0 {
+		time.AfterFunc(spec.Delay, func() {
+			s.releaseScheduled(id)
+		})
+		s.logger.Info("report job scheduled",
+			zap.String("id", id), zap.String("source", spec.Source),
+			zap.Duration("delay", spec.Delay), zap.Time("scheduled_at", *scheduledAt))
+		return response, nil
+	}
 
 	select {
 	case s.queue <- id:
@@ -89,6 +110,24 @@ func (s *Service) enqueue(spec createJobSpec) (*reportJob, error) {
 		s.removeJobOrderLocked(id)
 		s.mu.Unlock()
 		return nil, fmt.Errorf("report queue is full")
+	}
+}
+
+func (s *Service) releaseScheduled(id string) {
+	s.mu.Lock()
+	job := s.jobs[id]
+	if job == nil || job.Status != statusScheduled {
+		s.mu.Unlock()
+		return
+	}
+	job.Status = statusQueued
+	s.mu.Unlock()
+
+	select {
+	case s.queue <- id:
+		s.logger.Info("scheduled report job released", zap.String("id", id))
+	default:
+		s.markJobFailed(id, fmt.Errorf("queue full when scheduled job became ready"))
 	}
 }
 

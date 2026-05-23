@@ -41,6 +41,7 @@ func main() {
 	alertGroupsValue := flag.String("alert-groups", "", "comma-separated render groups for Grafana alert jobs")
 	defaultPeriod := flag.Duration("default-period", time.Hour, "default report period")
 	alertPeriod := flag.Duration("alert-period", time.Hour, "report period for Grafana alert webhooks")
+	alertDelay := flag.Duration("alert-delay", 0, "delay before generating a report after a Grafana alert (lets tail data settle)")
 	alertCooldown := flag.Duration("alert-cooldown", 30*time.Minute, "minimum interval between reports for the same Grafana alert fingerprint")
 	jobTimeout := flag.Duration("job-timeout", 15*time.Minute, "timeout for a single report job")
 	queueSize := flag.Int("queue-size", 100, "maximum queued report jobs")
@@ -74,7 +75,7 @@ func main() {
 	if err != nil {
 		logger.Fatal("invalid default groups", zap.Error(err))
 	}
-	alertGroups, err := reportd.ParseRenderGroups(firstNonEmpty(*alertGroupsValue, os.Getenv("REPORT_ALERT_GROUPS"), "offset,status"))
+	alertGroups, err := reportd.ParseRenderGroups(firstNonEmpty(*alertGroupsValue, os.Getenv("REPORT_ALERT_GROUPS"), "all"))
 	if err != nil {
 		logger.Fatal("invalid alert groups", zap.Error(err))
 	}
@@ -108,6 +109,7 @@ func main() {
 		AlertGroups:       alertGroups,
 		DefaultPeriod:     *defaultPeriod,
 		AlertPeriod:       *alertPeriod,
+		AlertDelay:        *alertDelay,
 		AlertCooldown:     *alertCooldown,
 		JobTimeout:        *jobTimeout,
 		ChartsPerPage:     *chartsPerPage,

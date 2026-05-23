@@ -1,0 +1,137 @@
+# Seed alert rules provisioned at Grafana startup.
+#
+# Rules listed here become "Provisioned" in the UI and CANNOT be edited via UI:
+# threshold, SQL, labels, annotations — all are read-only until you change this
+# file and restart Grafana (make grafana_down && make grafana_up).
+#
+# Add NEW rules through the Grafana UI (Alerting -> Alert rules -> New).
+# UI-created rules are fully editable and still route to the `reportd`
+# contact point because policies.yaml sends everything there by default.
+#
+# Keep this file MINIMAL — one well-known baseline rule is enough.
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: ptp_sync
+    folder: PTP
+    interval: 1m
+    rules:
+      - uid: ptp_offset_out_of_range
+        title: PTP offset out of +/-10us
+        condition: C
+        for: 2m
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+          # report_node: alpha           # narrow the PDF to one node (default: all)
+          # report_groups: offset,status # override --alert-groups for this rule
+          # report_delay: 60s            # wait N before generating, override --alert-delay
+        annotations:
+          summary: "PTP offset on {{ $labels.node }} is outside +/-10000 ns"
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: timescaledb
+            model:
+              refId: A
+              format: time_series
+              rawSql: |
+                SELECT
+                  time_bucket('30s', m.time) AS time,
+                  n.hostname AS node,
+                  max(abs(m.offset_ns))::float AS value
+                FROM timesync.ptp4l_metrics m
+                JOIN timesync.nodes n ON n.node_id = m.node_id
+                WHERE $__timeFilter(m.time)
+                  AND m.offset_ns IS NOT NULL
+                GROUP BY 1, 2
+                ORDER BY 1
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: reduce
+              reducer: last
+              expression: A
+              datasource:
+                type: __expr__
+                uid: __expr__
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [10000]
+              datasource:
+                type: __expr__
+                uid: __expr__
+
+  - orgId: 1
+    name: pps_sync
+    folder: PTP
+    interval: 1m
+    rules:
+      - uid: pps_offset_out_of_range
+        title: PPS offset out of +/-10us
+        condition: C
+        for: 2m
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: warning
+          # report_node: alpha
+          # report_groups: offset,status
+          # report_delay: 60s
+        annotations:
+          summary: "PPS offset on {{ $labels.node }} is outside +/-10000 ns"
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: timescaledb
+            model:
+              refId: A
+              format: time_series
+              rawSql: |
+                SELECT
+                  time_bucket('30s', m.time) AS time,
+                  n.hostname AS node,
+                  max(abs(m.offset_ns))::float AS value
+                FROM timesync.pps_metrics m
+                JOIN timesync.nodes n ON n.node_id = m.node_id
+                WHERE $__timeFilter(m.time)
+                  AND m.offset_ns IS NOT NULL
+                GROUP BY 1, 2
+                ORDER BY 1
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: reduce
+              reducer: last
+              expression: A
+              datasource:
+                type: __expr__
+                uid: __expr__
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [10000]
+              datasource:
+                type: __expr__
+                uid: __expr__
