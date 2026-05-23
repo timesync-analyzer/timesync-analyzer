@@ -15,6 +15,19 @@ type PtpTopologySnapshot struct {
 	ChildPort           int32
 }
 
+type ReportStats struct {
+	Hostname string
+	Protocol string
+	Metric   string
+	Unit     string
+	Samples  int64
+	Min      float64
+	Max      float64
+	Mean     float64
+	RMS      float64
+	HasData  bool
+}
+
 type Storage interface {
 	GetNodeIDList(ctx context.Context) ([]int32, error)
 	ResolveNodeID(hostname string) (int32, bool)
@@ -39,4 +52,8 @@ type Storage interface {
 	DeactivateStaleNodes(ctx context.Context, timeout time.Duration) error
 
 	Close()
+}
+
+type ReportStatsLoader interface {
+	LoadReportStats(ctx context.Context, from, to time.Time) ([]ReportStats, error)
 }

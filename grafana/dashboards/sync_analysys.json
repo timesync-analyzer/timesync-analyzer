@@ -276,7 +276,7 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 80
+                "value": 177
               },
               {
                 "id": "custom.align",
@@ -360,11 +360,23 @@
                 "value": 80
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "stored_type"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 108
+              }
+            ]
           }
         ]
       },
       "gridPos": {
-        "h": 7,
+        "h": 9,
         "w": 24,
         "x": 0,
         "y": 19
@@ -480,7 +492,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 26
+        "y": 28
       },
       "id": 7,
       "interval": "1s",
@@ -594,7 +606,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 34
+        "y": 36
       },
       "id": 21,
       "options": {
@@ -738,7 +750,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 34
+        "y": 36
       },
       "id": 22,
       "options": {
@@ -877,7 +889,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 34
+        "y": 36
       },
       "id": 37,
       "options": {
@@ -1005,38 +1017,13 @@
           },
           "unit": "short"
         },
-        "overrides": [
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "zip-bookworm (ptp master)"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": true,
-                  "viz": true
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 44
       },
       "id": 9,
       "interval": "1s",
@@ -1141,7 +1128,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 50
+        "y": 52
       },
       "id": 11,
       "interval": "1s",
@@ -1254,7 +1241,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 58
+        "y": 60
       },
       "id": 23,
       "options": {
@@ -1398,7 +1385,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 58
+        "y": 60
       },
       "id": 24,
       "options": {
@@ -1530,7 +1517,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 58
+        "y": 60
       },
       "id": 38,
       "options": {
@@ -1657,7 +1644,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 66
+        "y": 68
       },
       "id": 3,
       "interval": "1s",
@@ -1762,7 +1749,7 @@
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 74
+        "y": 76
       },
       "id": 5,
       "interval": "1s",
@@ -1870,7 +1857,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 83
+        "y": 85
       },
       "id": 13,
       "interval": "1s",
@@ -1979,7 +1966,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 91
+        "y": 93
       },
       "id": 1,
       "interval": "1s",
@@ -2115,7 +2102,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 99
+        "y": 101
       },
       "id": 25,
       "options": {
@@ -2259,7 +2246,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 99
+        "y": 101
       },
       "id": 26,
       "options": {
@@ -2391,7 +2378,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 99
+        "y": 101
       },
       "id": 39,
       "options": {
@@ -2512,41 +2499,13 @@
           },
           "unit": "ns"
         },
-        "overrides": [
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "alpha (ptp slave) pps",
-                  "alpha (ptp slave) ptp4l",
-                  "zip-bookworm (ptp slave) pps",
-                  "zip-bookworm (ptp slave) ptp4l"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": true,
-                  "viz": true
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 107
+        "y": 109
       },
       "id": 29,
       "interval": "1s",
@@ -2649,38 +2608,13 @@
           },
           "unit": "ns"
         },
-        "overrides": [
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "alpha (ptp slave) pps"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": true,
-                  "viz": true
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 115
+        "y": 117
       },
       "id": 31,
       "interval": "1s",
@@ -2780,38 +2714,13 @@
           },
           "unit": "ns"
         },
-        "overrides": [
-          {
-            "__systemRef": "hideSeriesFrom",
-            "matcher": {
-              "id": "byNames",
-              "options": {
-                "mode": "exclude",
-                "names": [
-                  "hawk-d12"
-                ],
-                "prefix": "All except:",
-                "readOnly": true
-              }
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "legend": false,
-                  "tooltip": true,
-                  "viz": true
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 123
+        "y": 125
       },
       "id": 33,
       "interval": "1s",
@@ -2917,7 +2826,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 131
+        "y": 133
       },
       "id": 35,
       "interval": "1s",
@@ -3023,10 +2932,10 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 139
+        "y": 141
       },
       "id": 40,
-      "interval": "1s",
+      "interval": "15s",
       "options": {
         "legend": {
           "calcs": [
@@ -3064,171 +2973,6 @@
       ],
       "title": "Offset СКО — phc2sys / ptp4l / PPS",
       "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "timescaledb"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "right",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "footer": {
-              "reducers": []
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": 0
-              },
-              {
-                "color": "yellow",
-                "value": -10000
-              },
-              {
-                "color": "green",
-                "value": -5000
-              },
-              {
-                "color": "yellow",
-                "value": 5000
-              },
-              {
-                "color": "red",
-                "value": 10000
-              }
-            ]
-          },
-          "unit": "ns"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "hostname"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 150
-              },
-              {
-                "id": "custom.align",
-                "value": "left"
-              },
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "auto"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "type"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 80
-              },
-              {
-                "id": "custom.align",
-                "value": "left"
-              },
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "applyToRow": true,
-                  "type": "color-background"
-                }
-              },
-              {
-                "id": "mappings",
-                "value": [
-                  {
-                    "options": {
-                      "master": {
-                        "color": "blue",
-                        "index": 0
-                      },
-                      "slave": {
-                        "color": "purple",
-                        "index": 1
-                      }
-                    },
-                    "type": "value"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byType",
-              "options": "number"
-            },
-            "properties": [
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "applyToRow": false,
-                  "type": "color-background"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 24,
-        "x": 0,
-        "y": 147
-      },
-      "id": 36,
-      "options": {
-        "cellHeight": "sm",
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": false,
-            "displayName": "type"
-          }
-        ]
-      },
-      "pluginVersion": "12.3.3",
-      "repeat": "phc2sys_has_data",
-      "repeatDirection": "h",
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "timescaledb"
-          },
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "WITH phc AS (\n  SELECT\n    date_trunc('minute', time) AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.phc2sys_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n),\npps AS (\n  SELECT\n    date_trunc('minute', time) AS t,\n    node_id,\n    avg(offset_ns) AS offset\n  FROM timesync.pps_metrics\n  WHERE $__timeFilter(time)\n  GROUP BY 1, 2\n),\ndiff AS (\n  SELECT phc.node_id, phc.offset - pps.offset AS delta\n  FROM phc JOIN pps ON pps.node_id = phc.node_id AND pps.t = phc.t\n)\nSELECT\n  n.hostname,\n  n.type::text AS type,\n  round(avg(abs(delta))) AS \"Avg abs\",\n  min(delta) AS \"Min\",\n  max(delta) AS \"Max\",\n  round(sqrt(avg(power(delta::float8, 2)))) AS \"RMS\"\nFROM diff\nJOIN timesync.nodes n ON n.node_id = diff.node_id\nWHERE n.hostname ~ '${node:pipe}'\nGROUP BY n.hostname, n.type\nORDER BY n.type, n.hostname",
-          "refId": "A"
-        }
-      ],
-      "title": "phc2sys - PPS Offset — Статистика",
-      "type": "table"
     }
   ],
   "preload": false,
@@ -3370,5 +3114,5 @@
   "timezone": "browser",
   "title": "Анализ синхронизации",
   "uid": "sync-analysis",
-  "version": 62
+  "version": 63
 }
