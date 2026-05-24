@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -98,16 +99,46 @@ func (s *Service) handleReportByID(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusNotFound, "pdf not found")
 			return
 		}
-		http.ServeFile(w, r, job.PDFPath)
+		serveReportFile(w, r, job, job.PDFPath, "application/pdf")
 	case "summary.csv":
 		if job.CSVPath == "" {
 			writeError(w, http.StatusNotFound, "csv not found")
 			return
 		}
-		http.ServeFile(w, r, job.CSVPath)
+		serveReportFile(w, r, job, job.CSVPath, "text/csv; charset=utf-8")
 	default:
 		writeError(w, http.StatusNotFound, "report artifact not found")
 	}
+}
+
+func serveReportFile(w http.ResponseWriter, r *http.Request, job *reportJob, path, contentType string) {
+	disposition := "attachment"
+	if inline, _ := strconv.ParseBool(r.URL.Query().Get("inline")); inline {
+		disposition = "inline"
+	}
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`%s; filename="%s"`, disposition, downloadFilename(job, path)))
+	http.ServeFile(w, r, path)
+}
+
+func downloadFilename(job *reportJob, path string) string {
+	base := filepath.Base(path)
+	prefix := filepath.Base(filepath.Dir(path))
+	if prefix == "" || prefix == "." || prefix == "/" {
+		prefix = job.ID
+	}
+	return sanitizeFilename(prefix + "-" + base)
+}
+
+func sanitizeFilename(name string) string {
+	replacer := strings.NewReplacer(
+		"\"", "_",
+		"\\", "_",
+		"/", "_",
+		"\r", "_",
+		"\n", "_",
+	)
+	return replacer.Replace(name)
 }
 
 func (s *Service) createSpecFromRequest(req createReportRequest, defaultPeriod time.Duration, defaultGroups report.RenderGroups, defaultSource string) (createJobSpec, error) {

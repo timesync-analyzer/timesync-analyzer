@@ -39,6 +39,10 @@ type Options struct {
 	QueueSize            int
 	WorkerCount          int
 	Token                string
+	ReportTTL            time.Duration
+	CleanupInterval      time.Duration
+	AutoReportInterval   time.Duration
+	AutoReportWindow     time.Duration
 }
 
 type Service struct {

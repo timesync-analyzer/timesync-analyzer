@@ -46,6 +46,23 @@ func (s *Service) Start(ctx context.Context) {
 		workerID := i
 		go s.worker(ctx, workerID)
 	}
+	if s.opts.ReportTTL > 0 && s.opts.CleanupInterval > 0 {
+		s.logger.Info("report cleanup enabled",
+			zap.Duration("ttl", s.opts.ReportTTL),
+			zap.Duration("interval", s.opts.CleanupInterval),
+			zap.String("out_dir", s.opts.OutDir))
+		go s.cleanupLoop(ctx)
+	}
+	if s.opts.AutoReportInterval > 0 {
+		window := s.opts.AutoReportWindow
+		if window <= 0 {
+			window = s.opts.AutoReportInterval
+		}
+		s.logger.Info("auto report generation enabled",
+			zap.Duration("interval", s.opts.AutoReportInterval),
+			zap.Duration("window", window))
+		go s.autoReportLoop(ctx)
+	}
 }
 
 func (s *Service) enqueue(spec createJobSpec) (*reportJob, error) {
