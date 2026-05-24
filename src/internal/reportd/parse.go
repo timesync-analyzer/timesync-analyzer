@@ -79,10 +79,10 @@ func parseLooseDuration(value string) (time.Duration, error) {
 }
 
 func ParseRenderGroups(value string) (report.RenderGroups, error) {
-	return parseRenderGroupList(splitCSV(value))
+	return ParseRenderGroupList(splitCSV(value))
 }
 
-func parseRenderGroupList(values []string) (report.RenderGroups, error) {
+func ParseRenderGroupList(values []string) (report.RenderGroups, error) {
 	var groups report.RenderGroups
 	for _, value := range normalizeGroupNames(values) {
 		switch value {

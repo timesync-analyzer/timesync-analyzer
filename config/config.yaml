@@ -11,3 +11,36 @@ storage:
 worker:
   num_workers: 4
   queue_size: 1000
+reportd:
+  listen: ":8080"
+  out_dir: reports
+  job_timeout: 15m
+  queue_size: 100
+  workers: 1
+  charts_per_page: 3
+  skip_charts: false
+  dashboards:
+    sync: grafana/dashboards/sync_analysys.json
+    network: grafana/dashboards/network.json
+    system: grafana/dashboards/system_resources.json
+  defaults:
+    groups: [offset, status]
+    period: 1h
+  alerts:
+    groups: [all]
+    period: 1h
+    delay: 0s
+    cooldown: 30m
+  grafana:
+    url: http://localhost:3000
+    node: ".*"
+    width: 1200
+    height: 420
+    render_workers: 4
+    render_timeout: 2m
+  cleanup:
+    report_ttl: 168h
+    interval: 1h
+  auto:
+    interval: 0s
+    window: 0s

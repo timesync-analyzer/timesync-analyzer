@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strings"
 	"syscall"
 	"time"
 
@@ -32,32 +31,6 @@ const (
 func main() {
 	configPath := flag.String("config", "config/config.yaml", "path to analyzer config")
 	envPath := flag.String("env", "", "path to .env file (defaults to <config-dir>/.env)")
-	listenAddr := flag.String("listen", ":8080", "HTTP listen address")
-	outDir := flag.String("out", "reports", "output directory")
-	dashboardPath := flag.String("dashboard", "grafana/dashboards/sync_analysys.json", "Grafana sync dashboard JSON to render")
-	networkDashboardPath := flag.String("network-dashboard", "grafana/dashboards/network.json", "Grafana network dashboard JSON to render")
-	systemDashboardPath := flag.String("system-dashboard", "grafana/dashboards/system_resources.json", "Grafana system resources dashboard JSON to render")
-	defaultGroupsValue := flag.String("default-groups", "", "comma-separated render groups for manual/cron jobs")
-	alertGroupsValue := flag.String("alert-groups", "", "comma-separated render groups for Grafana alert jobs")
-	defaultPeriod := flag.Duration("default-period", time.Hour, "default report period")
-	alertPeriod := flag.Duration("alert-period", time.Hour, "report period for Grafana alert webhooks")
-	alertDelay := flag.Duration("alert-delay", 0, "delay before generating a report after a Grafana alert (lets tail data settle)")
-	alertCooldown := flag.Duration("alert-cooldown", 30*time.Minute, "minimum interval between reports for the same Grafana alert fingerprint")
-	jobTimeout := flag.Duration("job-timeout", 15*time.Minute, "timeout for a single report job")
-	queueSize := flag.Int("queue-size", 100, "maximum queued report jobs")
-	workerCount := flag.Int("workers", 1, "number of concurrent report workers")
-	chartsPerPage := flag.Int("charts-per-page", 3, "number of rendered Grafana panels per PDF page")
-	defaultSkipCharts := flag.Bool("skip-charts", false, "skip Grafana chart rendering by default")
-	tokenFlag := flag.String("token", "", "bearer token for API requests")
-	grafanaURLFlag := flag.String("grafana-url", "", "Grafana base URL for rendered charts")
-	grafanaUserFlag := flag.String("grafana-user", "", "Grafana basic auth user")
-	grafanaPasswordFlag := flag.String("grafana-password", "", "Grafana basic auth password")
-	grafanaTokenFlag := flag.String("grafana-token", "", "Grafana service account token")
-	grafanaNodeFlag := flag.String("grafana-node", "", "default Grafana node variable value")
-	renderWidth := flag.Int("render-width", 1200, "Grafana rendered chart width")
-	renderHeight := flag.Int("render-height", 420, "Grafana rendered chart height")
-	renderWorkers := flag.Int("render-workers", 4, "number of parallel Grafana panel renders per job")
-	renderTimeout := flag.Duration("render-timeout", 2*time.Minute, "timeout for each Grafana panel render")
 	flag.Parse()
 
 	resolvedEnv := *envPath
@@ -71,11 +44,12 @@ func main() {
 	cfg := config.MustLoad(*configPath)
 	logger := buildLogger(cfg.Env)
 
-	defaultGroups, err := reportd.ParseRenderGroups(firstNonEmpty(*defaultGroupsValue, os.Getenv("REPORT_DEFAULT_GROUPS"), "offset,status"))
+	rc := cfg.Reportd
+	defaultGroups, err := reportd.ParseRenderGroupList(rc.Defaults.Groups)
 	if err != nil {
 		logger.Fatal("invalid default groups", zap.Error(err))
 	}
-	alertGroups, err := reportd.ParseRenderGroups(firstNonEmpty(*alertGroupsValue, os.Getenv("REPORT_ALERT_GROUPS"), "all"))
+	alertGroups, err := reportd.ParseRenderGroupList(rc.Alerts.Groups)
 	if err != nil {
 		logger.Fatal("invalid alert groups", zap.Error(err))
 	}
@@ -90,46 +64,50 @@ func main() {
 	defer store.Close()
 
 	opts := reportd.Options{
-		OutDir:               *outDir,
-		DashboardPath:        *dashboardPath,
-		NetworkDashboardPath: *networkDashboardPath,
-		SystemDashboardPath:  *systemDashboardPath,
+		OutDir:               rc.OutDir,
+		DashboardPath:        rc.Dashboards.Sync,
+		NetworkDashboardPath: rc.Dashboards.Network,
+		SystemDashboardPath:  rc.Dashboards.System,
 		Grafana: report.GrafanaConfig{
-			URL:           firstNonEmpty(*grafanaURLFlag, os.Getenv("GRAFANA_URL"), "http://localhost:3000"),
-			User:          firstNonEmpty(*grafanaUserFlag, os.Getenv("GRAFANA_ADMIN_USER"), os.Getenv("GF_SECURITY_ADMIN_USER")),
-			Password:      firstNonEmpty(*grafanaPasswordFlag, os.Getenv("GRAFANA_ADMIN_PASSWORD"), os.Getenv("GF_SECURITY_ADMIN_PASSWORD")),
-			Token:         firstNonEmpty(*grafanaTokenFlag, os.Getenv("GRAFANA_TOKEN")),
-			Width:         *renderWidth,
-			Height:        *renderHeight,
-			Node:          firstNonEmpty(*grafanaNodeFlag, os.Getenv("REPORT_GRAFANA_NODE"), ".*"),
-			RenderWorkers: *renderWorkers,
-			RenderTimeout: *renderTimeout,
+			URL:           rc.Grafana.URL,
+			User:          firstNonEmpty(rc.Grafana.User, os.Getenv("GF_SECURITY_ADMIN_USER")),
+			Password:      firstNonEmpty(rc.Grafana.Password, os.Getenv("GF_SECURITY_ADMIN_PASSWORD")),
+			Token:         rc.Grafana.Token,
+			Width:         rc.Grafana.Width,
+			Height:        rc.Grafana.Height,
+			Node:          rc.Grafana.Node,
+			RenderWorkers: rc.Grafana.RenderWorkers,
+			RenderTimeout: rc.Grafana.RenderTimeout,
 		},
-		DefaultGroups:     defaultGroups,
-		AlertGroups:       alertGroups,
-		DefaultPeriod:     *defaultPeriod,
-		AlertPeriod:       *alertPeriod,
-		AlertDelay:        *alertDelay,
-		AlertCooldown:     *alertCooldown,
-		JobTimeout:        *jobTimeout,
-		ChartsPerPage:     *chartsPerPage,
-		DefaultSkipCharts: *defaultSkipCharts,
-		QueueSize:         *queueSize,
-		WorkerCount:       *workerCount,
-		Token:             firstNonEmpty(*tokenFlag, os.Getenv("REPORT_TOKEN")),
+		DefaultGroups:      defaultGroups,
+		AlertGroups:        alertGroups,
+		DefaultPeriod:      rc.Defaults.Period,
+		AlertPeriod:        rc.Alerts.Period,
+		AlertDelay:         rc.Alerts.Delay,
+		AlertCooldown:      rc.Alerts.Cooldown,
+		JobTimeout:         rc.JobTimeout,
+		ChartsPerPage:      rc.Defaults.ChartsPerPage,
+		DefaultSkipCharts:  rc.Defaults.SkipCharts,
+		QueueSize:          rc.QueueSize,
+		WorkerCount:        rc.WorkerCount,
+		Token:              rc.Token,
+		ReportTTL:          rc.Cleanup.ReportTTL,
+		CleanupInterval:    rc.Cleanup.Interval,
+		AutoReportInterval: rc.Auto.Interval,
+		AutoReportWindow:   rc.Auto.Window,
 	}
 
 	svc := reportd.New(store, opts, logger)
 	svc.Start(ctx)
 
 	server := &http.Server{
-		Addr:              *listenAddr,
+		Addr:              rc.Listen,
 		Handler:           svc.Handler(),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	go func() {
-		logger.Info("report service started", zap.String("listen", *listenAddr), zap.String("out_dir", *outDir))
+		logger.Info("report service started", zap.String("listen", rc.Listen), zap.String("out_dir", rc.OutDir))
 		if opts.Token == "" {
 			logger.Warn("REPORT_TOKEN is empty; report API is unauthenticated")
 		}
@@ -169,8 +147,8 @@ func buildLogger(env string) *zap.Logger {
 
 func firstNonEmpty(values ...string) string {
 	for _, value := range values {
-		if strings.TrimSpace(value) != "" {
-			return strings.TrimSpace(value)
+		if value != "" {
+			return value
 		}
 	}
 	return ""

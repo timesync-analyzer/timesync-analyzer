@@ -170,7 +170,7 @@ func (s *Service) runJob(parent context.Context, workerID int, jobID string) {
 	ctx, cancel := context.WithTimeout(parent, s.opts.JobTimeout)
 	defer cancel()
 
-	groups, err := parseRenderGroupList(job.Groups)
+	groups, err := ParseRenderGroupList(job.Groups)
 	if err != nil {
 		s.markJobFailed(job.ID, err)
 		return

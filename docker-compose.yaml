@@ -96,16 +96,14 @@ services:
       - DB_HOST=timescaledb
       - DB_PORT=5432
       - GRAFANA_URL=http://grafana:3000
+      - REPORTD_OUT_DIR=/reports
+      - REPORTD_LISTEN=:8080
       - REPORT_TOKEN=${REPORT_TOKEN:-}
       - TZ=${TZ:-UTC}
     entrypoint: ["/app/reportd"]
     command:
       - "-config"
       - "/app/config/config.yaml"
-      - "-out"
-      - "/reports"
-      - "-listen"
-      - ":8080"
     ports:
       - "${REPORTD_PORT:-8080}:8080"
     volumes:

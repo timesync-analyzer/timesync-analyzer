@@ -174,7 +174,7 @@ func (s *Service) createSpecFromRequest(req createReportRequest, defaultPeriod t
 	groupNames := renderGroupNames(defaultGroups)
 	if len(req.Groups) > 0 {
 		var err error
-		groups, err = parseRenderGroupList(req.Groups)
+		groups, err = ParseRenderGroupList(req.Groups)
 		if err != nil {
 			return createJobSpec{}, err
 		}
