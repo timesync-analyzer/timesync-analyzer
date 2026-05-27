@@ -5,9 +5,9 @@ datasources:
     type: postgres
     uid: timescaledb
     url: timescaledb:5432
-    user: readonly_user
+    user: $__env{READONLY_USER}
     secureJsonData:
-      password: secure_readonly_password
+      password: $__env{READONLY_PASSWORD}
     jsonData:
       database: timesync
       sslmode: disable
