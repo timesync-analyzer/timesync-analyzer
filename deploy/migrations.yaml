@@ -1,0 +1,5 @@
+production:
+  dialect: postgres
+  datasource: "sslmode=disable"
+  dir: /app/migrations
+  table: gorp_migrations

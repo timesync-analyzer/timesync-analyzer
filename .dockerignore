@@ -15,3 +15,6 @@ Makefile
 dbconfig.yml
 tests/
 src/tests/
+**/.env
+**/.env.*
+dist/

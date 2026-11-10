@@ -27,3 +27,4 @@ _testmain.go
 .env
 reports/
 dbconfig.yml
+dist/

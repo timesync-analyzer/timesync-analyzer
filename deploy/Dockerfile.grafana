@@ -1,0 +1,16 @@
+ARG GRAFANA_BASE_IMAGE=grafana/grafana:latest
+FROM ${GRAFANA_BASE_IMAGE}
+
+USER root
+# Plugins and dashboards must not be hidden by an existing data volume on upgrade.
+ENV GF_PATHS_PLUGINS=/opt/grafana-plugins
+ARG FORM_PANEL_VERSION
+ARG INFINITY_VERSION
+RUN mkdir -p "$GF_PATHS_PLUGINS" \
+    && grafana cli --pluginsDir "$GF_PATHS_PLUGINS" plugins install volkovlabs-form-panel ${FORM_PANEL_VERSION} \
+    && grafana cli --pluginsDir "$GF_PATHS_PLUGINS" plugins install yesoreyeram-infinity-datasource ${INFINITY_VERSION} \
+    && chown -R grafana:root "$GF_PATHS_PLUGINS"
+COPY grafana/provisioning /etc/grafana/provisioning
+COPY grafana/dashboards /opt/grafana-dashboards
+RUN sed -i 's|/var/lib/grafana/dashboards|/opt/grafana-dashboards|' /etc/grafana/provisioning/dashboards/dashboards.yaml
+USER grafana
